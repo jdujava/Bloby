@@ -1,0 +1,23 @@
+{
+  "name": "datbestgame",
+  "version": "1.0.0",
+  "description": "creating game with sockets",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "keywords": [
+    "p5.js",
+    "sockets",
+    "game",
+    "node"
+  ],
+  "author": "Dujava Jonas",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.14.0",
+    "heroku": "^0.2.0",
+    "socket.io": "^1.7.1"
+  }
+}

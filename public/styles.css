@@ -1,0 +1,12 @@
+body {padding: 0; margin: 0;}
+#defaultCanvas0{
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+#peopleCounter{
+  position: absolute;
+  top: 820px;
+  left: 50%;
+  transform: translateX(-50%);
+}
