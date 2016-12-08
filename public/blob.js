@@ -1,17 +1,18 @@
 class Blob {
-  constructor(x,y,t,r) {
+  constructor(x,y,t) {
     this.pos = createVector(x,y);
     this.vel = createVector(0,0);
     this.acc = createVector(0,0);
     this.theta = t;
     this.omega = omega;
-    this.r = r;
+    this.r = 30;
     this.f = 0;
     this.ch = 0;
     this.rotating = true;
   }
 
   run(){
+    this.borders();
     this.update();
     this.render();
   }
@@ -29,6 +30,15 @@ class Blob {
     }
     this.f += this.ch;
     this.f = max(0,min(100,this.f));
+  }
+
+  borders(){
+    if (this.pos.x > 1000 || this.pos.x < 0) {
+      this.vel.x *= -1;
+    }
+    if (this.pos.y > 800 || this.pos.y < 0) {
+      this.vel.y *= -1;
+    }
   }
 
   render(){
