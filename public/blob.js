@@ -43,6 +43,23 @@ class Blob {
   }
 
   collision(other){
-
+    var dif = p5.Vector.sub(this.pos,other.pos);
+    var dist = dif.mag();
+    if (dist <= this.r*2) {
+      dif.normalize();
+      var force1 = 0.6 * p5.Vector.dot(other.vel, dif);
+      var force2 = 0.6 * p5.Vector.dot(this.vel, dif);
+      this.pos.sub(this.vel);
+      other.pos.sub(other.vel);
+      dif.mult(force1);
+      this.applyForce(dif);
+      dif.mult(-1);
+      other.applyForce(dif);
+      dif.normalize();
+      dif.mult(force2);
+      this.applyForce(dif);
+      dif.mult(-1);
+      other.applyForce(dif);
+    }
   }
 }

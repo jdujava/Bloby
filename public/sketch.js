@@ -46,6 +46,11 @@ function keyReleased() {
 
 function draw() {
   background(51);
+  for (var i = 0; i < blobs.length-1; i++) {
+    for (var j = i+1; j < blobs.length; j++) {
+        blobs[i].collision(blobs[j]);
+    }
+  }
   for (var i = 0; i < blobs.length; i++) {
     blobs[i].run();
   }
