@@ -39,7 +39,22 @@ function keyPressed() {
   blob.rotating = false;
 }
 
+function touchStarted() {
+  blob.ch = 3;
+  blob.omega *= -1;
+  blob.rotating = false;
+}
+
 function keyReleased() {
+  blob.ch = -20;
+  var x = cos(blob.theta)*pow(blob.f/40,2);
+  var y = sin(blob.theta)*pow(blob.f/40,2);
+  var f = createVector(x,y);
+  blob.applyForce(f);
+  blob.rotating = true;
+}
+
+function touchEnded() {
   blob.ch = -20;
   var x = cos(blob.theta)*pow(blob.f/40,2);
   var y = sin(blob.theta)*pow(blob.f/40,2);
