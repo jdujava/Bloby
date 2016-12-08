@@ -47,19 +47,11 @@ class Blob {
     var dist = dif.mag();
     if (dist <= this.r*2) {
       dif.normalize();
-      var force1 = 0.6 * p5.Vector.dot(other.vel, dif);
-      var force2 = 0.6 * p5.Vector.dot(this.vel, dif);
-      this.pos.sub(this.vel);
-      other.pos.sub(other.vel);
-      dif.mult(force1);
-      this.applyForce(dif);
-      dif.mult(-1);
-      other.applyForce(dif);
-      dif.normalize();
-      dif.mult(force2);
-      this.applyForce(dif);
-      dif.mult(-1);
-      other.applyForce(dif);
+      var p = this.vel.x * dif.x + this.vel.y * dif.y - other.vel.x * dif.x - other.vel.y * dif.y;
+      var f1 = p5.Vector.mult(dif, -p);
+      var f2 = p5.Vector.mult(dif, p);
+      this.applyForce(f1);
+      other.applyForce(f2);
     }
   }
 }
