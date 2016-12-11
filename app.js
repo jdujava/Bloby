@@ -28,7 +28,7 @@ function byID(id){
 
 Number.prototype.fixed = function(n) { n = n || 3; return parseFloat(this.toFixed(n)); };
 
-function Blob(_x,_y,t,id) {
+function Blob(_x,_y,t,id,n) {
   this.pos = {x:_x,y:_y};
   this.vel = {x:0,y:0};
   this.acc = {x:0,y:0};
@@ -39,6 +39,9 @@ function Blob(_x,_y,t,id) {
   this.ch = 0;
   this.rotating = true;
   this.id = id;
+  this.name = n;
+  this.score = 0;
+  this.touch;
 
   this.run = function () {
     this.borders();
@@ -76,11 +79,18 @@ function Blob(_x,_y,t,id) {
   }
 
   this.borders = function(){
-    if (this.pos.x > 1000 || this.pos.x < 0) {
-      this.vel.x *= -1;
-    }
-    if (this.pos.y > 800 || this.pos.y < 0) {
-      this.vel.y *= -1;
+    if (this.mag(this.sub(this.pos,{x:500,y:400}))>320) {
+      this.score--;
+      if (this.touch) {
+        byID(this.touch).score ++;
+        this.touch = undefined;
+      }
+      this.pos.x = 400 + Math.random()*200;
+      this.pos.y = 300 + Math.random()*200;
+      this.vel = this.mult(this.vel,0);
+      this.ch = -20;
+      this.f = 0;
+      this.rotating = true;
     }
   }
 
@@ -94,6 +104,8 @@ function Blob(_x,_y,t,id) {
       var f2 = this.mult(dif, p);
       this.applyForce(f1);
       other.applyForce(f2);
+      this.touch = other.id;
+      other.touch = this.id;
     }
   }
 
@@ -150,7 +162,7 @@ function newConnection(socket) {
     io.sockets.emit("count",peopleCounter);
   }
   function start(data) {
-    var blob = new Blob(data.x,data.y,data.t,data.id);
+    var blob = new Blob(data.x,data.y,data.t,data.id,data.name);
     blobs.push(blob);
   }
   function press(id) {

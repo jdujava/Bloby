@@ -11,6 +11,7 @@ function Blob(_x,_y,t,id) {
   this.ch = 0;
   this.rotating = true;
   this.id = id;
+  this.name;
 
   this.run = function () {
     this.borders();
