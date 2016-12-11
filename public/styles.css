@@ -13,3 +13,9 @@ body {padding: 0;
   left: 50%;
   transform: translateX(-50%);
 }
+#peopleCounter{
+  position: absolute;
+  top: 820px;
+  left: 50%;
+  transform: translateX(-50%);
+}

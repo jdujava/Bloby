@@ -1,70 +1,163 @@
-var
-    gameport        = process.env.PORT || 5000,
 
-    io              = require('socket.io'),
-    express         = require('express'),
-    UUID            = require('node-uuid'),
+var express = require('express');
+var uuid = require('uuid');
 
-    verbose         = false,
-    http            = require('http'),
-    app             = express(),
-    server          = http.createServer(app);
+var app = express();
 
+app.set('port', (process.env.PORT || 5000));
+var server = app.listen(process.env.PORT || 5000);
 
-server.listen(gameport)
+app.use(express.static(__dirname + '/public'));
 
-console.log('\t :: Express :: Listening on port ' + gameport );
+var socket = require('socket.io');
+var io = socket(server);
 
-app.get( '/', function( req, res ){
-    console.log('trying to load %s', __dirname + '/public/index.html');
-    res.sendfile( '/public/index.html' , { root:__dirname/public });
-});
+var blobs = [];
+var peopleCounter = 0;
+var omega = 0.1;
+var fr = 30;
 
-app.get( '/*' , function( req, res, next ) {
-
-    var file = req.params[0];
-
-    if(verbose) console.log('\t :: Express :: file requested : ' + file);
-
-    res.sendfile( __dirname + '/' + file );
-
-});
-
-var sio = io.listen(server);
+function byID(id){
+  for (var i = 0; i < blobs.length; i++) {
+    if(id === blobs[i].id){
+      return blobs[i];
+    }
+  }
+}
 
 
-sio.configure(function (){
+Number.prototype.fixed = function(n) { n = n || 3; return parseFloat(this.toFixed(n)); };
 
-    sio.set('log level', 0);
+function Blob(_x,_y,t,id) {
+  this.pos = {x:_x,y:_y};
+  this.vel = {x:0,y:0};
+  this.acc = {x:0,y:0};
+  this.theta = t;
+  this.omega = omega;
+  this.r = 30;
+  this.f = 0;
+  this.ch = 0;
+  this.rotating = true;
+  this.id = id;
 
-    sio.set('authorization', function (handshakeData, callback) {
-      callback(null, true);
-    });
+  this.run = function () {
+    this.borders();
+    this.update();
+  }
 
-});
+  this.applyForce = function(f){
+    this.acc = this.add(this.acc,f);
+  }
 
-sio.sockets.on('connection', function (client) {
+  this.charge = function(){
+    this.ch = 3;
+    this.omega *= -1;
+    this.rotating = false;
+  }
 
-    client.userid = UUID();
+  this.release = function(){
+    this.ch = -20;
+    var x = Math.cos(this.theta)*Math.pow(this.f/40,2);
+    var y = Math.sin(this.theta)*Math.pow(this.f/40,2);
+    var f = {x:x,y:y};
+    this.applyForce(f);
+    this.rotating = true;
+  }
 
-    client.emit('onconnected', { id: client.userid } );
+  this.update = function(){
+    this.vel = this.add(this.vel,this.acc);
+    this.pos = this.add(this.pos,this.vel);
+    this.acc = this.mult(this.acc, 0);
+    if (this.rotating) {
+      this.theta += this.omega;
+    }
+    this.f += this.ch;
+    this.f = Math.max(0,Math.min(100,this.f));
+  }
 
-    // game_server.findGame(client);
+  this.borders = function(){
+    if (this.pos.x > 1000 || this.pos.x < 0) {
+      this.vel.x *= -1;
+    }
+    if (this.pos.y > 800 || this.pos.y < 0) {
+      this.vel.y *= -1;
+    }
+  }
 
-    console.log('\t socket.io:: player ' + client.userid + ' connected');
+  this.collision = function(other){
+    var dif = this.sub(this.pos,other.pos);
+    var dist = this.mag(dif);
+    if (dist <= this.r*2) {
+      dif = this.mult(dif, 1/dist);
+      var p = this.vel.x * dif.x + this.vel.y * dif.y - other.vel.x * dif.x - other.vel.y * dif.y;
+      var f1 = this.mult(dif, -p);
+      var f2 = this.mult(dif, p);
+      this.applyForce(f1);
+      other.applyForce(f2);
+    }
+  }
 
-.
-    client.on('message', function(m) {
+  this.add = function(a,b) { return { x:(a.x+b.x).fixed(), y:(a.y+b.y).fixed() }; };
+      //Subtract a 2d vector with another one and return the resulting vector
+  this.sub = function(a,b) { return { x:(a.x-b.x).fixed(),y:(a.y-b.y).fixed() }; };
+      //Multiply a 2d vector with a scalar value and return the resulting vector
+  this.mult = function(a,b) { return {x: (a.x*b).fixed() , y:(a.y*b).fixed() }; };
 
-        game_server.onMessage(client, m);
+  this.mag = function(a) {return (Math.sqrt(Math.pow(a.x,2)+Math.pow(a.y,2))).fixed()};
+}
 
-    });
-    client.on('disconnect', function () {
 
-        console.log('\t socket.io:: client disconnected ' + client.userid + ' ' + client.game_id);
 
-        }
+setInterval(heartbeat,33);
+setInterval(physics,25);
 
-    });
+function heartbeat() {
+  io.sockets.emit("heartbeat", blobs);
+}
+function physics() {
+  for (var i = 0; i < blobs.length-1; i++) {
+    for (var j = i+1; j < blobs.length; j++) {
+        blobs[i].collision(blobs[j]);
+    }
+  }
+  for (var i = 0; i < blobs.length; i++) {
+    blobs[i].run();
+  }
+}
 
-});
+io.sockets.on('connection', newConnection);
+
+function newConnection(socket) {
+  peopleCounter++;
+  io.sockets.emit("count",peopleCounter);
+
+  var id = uuid();
+  socket.emit("id",id);
+
+  socket.on('disconnect', disconnect);
+  socket.on('start', start);
+  socket.on('press', press);
+  socket.on('release', release);
+
+  function disconnect() {
+    for (var i = 0; i < blobs.length; i++) {
+      if(id == blobs[i].id){
+        blobs.splice(i,1);
+      }
+    }
+    console.log(id);
+    peopleCounter--;
+    io.sockets.emit("count",peopleCounter);
+  }
+  function start(data) {
+    var blob = new Blob(data.x,data.y,data.t,data.id);
+    blobs.push(blob);
+  }
+  function press(id) {
+    byID(id).charge();
+  }
+  function release(id) {
+    byID(id).release();
+  }
+
+}

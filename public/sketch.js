@@ -1,21 +1,80 @@
-var game = {};
+var socket;
+var blobs = [];
+var omega = 0.1;
+var fr = 30;
+var blob;
 
-	//When loading, we store references to our
-	//drawing canvases, and initiate a game instance.
-setup(){
+function setup() {
+  frameRate(fr);
+  createCanvas(1000,800);
 
-		//Create our game client instance.
-	game = new game_core();
-    createCanvas(1000,800);
+  var p = document.getElementById('peopleCounter');
 
-			//Fetch the viewport
-		game.viewport = document.getElementById('defaultCanvas0');
+  socket = io.connect('http://localhost:5000/');
 
-			//Adjust their size
-		game.viewport.width = game.world.width;
-		game.viewport.height = game.world.height;
+	socket.on('id', getId);
+  socket.on('count', updateCount);
+  socket.on('heartbeat', heartbeat);
 
-		//Finally, start the loop
-	game.update( new Date().getTime() );
+	function getId(data) {
+		blob = new Blob(200,200,random(360),data);
 
+		var blobData = {
+			x : blob.pos.x,
+			y : blob.pos.y,
+			t : blob.theta,
+			id : blob.id
+		}
+		socket.emit('start',blobData);
+
+    console.log(blob);
+	}
+  function updateCount(data) {
+    p.innerHTML = "Počet pripojených ľudí : " + data;
+  }
+  function heartbeat(data) {
+    blobs = data;
+  }
+}
+
+function keyPressed() {
+  blob.charge();
+	socket.emit('press', blob.id);
+}
+
+function touchStarted() {
+  blob.charge();
+	socket.emit('press', blob.id);
+}
+
+function keyReleased() {
+  blob.release();
+	socket.emit('release', blob.id);
+}
+
+function touchEnded() {
+  blob.release();
+	socket.emit('release', blob.id);
+}
+
+function draw() {
+  background(51);
+
+
+
+  for (var i = 0; i < blobs.length; i++) {
+
+      push();
+      translate(blobs[i].pos.x,blobs[i].pos.y);
+      rotate(blobs[i].theta);
+      stroke(0,0,255);
+      fill(0,150,255);
+      ellipse(0, 0, 60, 60);
+      rect(33, -5, blobs[i].f + 10, 10);
+      pop();
+      fill(255);
+      textAlign(CENTER);
+      text(blobs[i].id,blobs[i].x,blobs[i].y+45);
+
+  }
 }
