@@ -1,3 +1,31 @@
+
+var express = require('express');
+var uuid = require('uuid');
+
+var app = express();
+
+app.set('port', (process.env.PORT || 5000));
+var server = app.listen(process.env.PORT || 5000);
+
+app.use(express.static(__dirname + '/public'));
+
+var socket = require('socket.io');
+var io = socket(server);
+
+var blobs = [];
+var peopleCounter = 0;
+var omega = 0.1;
+var fr = 30;
+
+function byID(id){
+  for (var i = 0; i < blobs.length; i++) {
+    if(id === blobs[i].id){
+      return blobs[i];
+    }
+  }
+}
+
+
 Number.prototype.fixed = function(n) { n = n || 3; return parseFloat(this.toFixed(n)); };
 
 function Blob(_x,_y,t,id) {
@@ -15,7 +43,6 @@ function Blob(_x,_y,t,id) {
   this.run = function () {
     this.borders();
     this.update();
-    this.render();
   }
 
   this.applyForce = function(f){
@@ -48,17 +75,6 @@ function Blob(_x,_y,t,id) {
     this.f = Math.max(0,Math.min(100,this.f));
   }
 
-  this.render = function () {
-    push();
-    translate(this.pos.x,this.pos.y);
-    rotate(this.theta);
-    stroke(0,0,255);
-    fill(150,0,255);
-    ellipse(0, 0, 2*this.r, 2*this.r);
-    rect(this.r + 3, -5, this.f + 10, 10);
-    pop();
-  }
-
   this.borders = function(){
     if (this.pos.x > 1000 || this.pos.x < 0) {
       this.vel.x *= -1;
@@ -88,4 +104,60 @@ function Blob(_x,_y,t,id) {
   this.mult = function(a,b) { return {x: (a.x*b).fixed() , y:(a.y*b).fixed() }; };
 
   this.mag = function(a) {return (Math.sqrt(Math.pow(a.x,2)+Math.pow(a.y,2))).fixed()};
+}
+
+
+
+setInterval(heartbeat,33);
+setInterval(physics,25);
+
+function heartbeat() {
+  io.sockets.emit("heartbeat", blobs);
+}
+function physics() {
+  for (var i = 0; i < blobs.length-1; i++) {
+    for (var j = i+1; j < blobs.length; j++) {
+        blobs[i].collision(blobs[j]);
+    }
+  }
+  for (var i = 0; i < blobs.length; i++) {
+    blobs[i].run();
+  }
+}
+
+io.sockets.on('connection', newConnection);
+
+function newConnection(socket) {
+  peopleCounter++;
+  io.sockets.emit("count",peopleCounter);
+
+  var id = uuid();
+  socket.emit("id",id);
+
+  socket.on('disconnect', disconnect);
+  socket.on('start', start);
+  socket.on('press', press);
+  socket.on('release', release);
+
+  function disconnect() {
+    for (var i = 0; i < blobs.length; i++) {
+      if(id == blobs[i].id){
+        blobs.splice(i,1);
+      }
+    }
+    console.log(id);
+    peopleCounter--;
+    io.sockets.emit("count",peopleCounter);
+  }
+  function start(data) {
+    var blob = new Blob(data.x,data.y,data.t,data.id);
+    blobs.push(blob);
+  }
+  function press(id) {
+    byID(id).charge();
+  }
+  function release(id) {
+    byID(id).release();
+  }
+
 }
