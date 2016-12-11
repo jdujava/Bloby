@@ -82,7 +82,9 @@ function Blob(_x,_y,t,id,n) {
     if (this.mag(this.sub(this.pos,{x:500,y:400}))>320) {
       this.score--;
       if (this.touch) {
-        byID(this.touch).score ++;
+        if (byID(this.touch)) {
+          byID(this.touch).score ++;
+        }
         this.touch = undefined;
       }
       this.pos.x = 400 + Math.random()*200;
