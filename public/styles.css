@@ -35,19 +35,19 @@ body {padding: 0;
   left: 50%;
   transform: translate(-50%,-50%);
 }
-input{
+input#nameInput{
   font-size:50px;
   padding:10px 10px 10px 5px;
   display:block;
-  width:300px;
+  width:400px;
   border:none;
   border-bottom:1px solid #757575;
   text-align: center;
   font-family: 'Titillium Web', sans-serif;
 }
-input:focus{ outline:none; }
+input#nameInput:focus{ outline:none; }
 
-.bar  { position:relative; display:block; width:300px; }
+.bar  { position:relative; display:block; width:400px; }
 .bar:before, .bar:after   {
   content:'';
   height:2px;
@@ -65,7 +65,7 @@ input:focus{ outline:none; }
 }
 
 /* active state */
-input:focus ~ .bar:before, input:focus ~ .bar:after {
+input#nameInput:focus ~ .bar:before, input#nameInput:focus ~ .bar:after {
   width:50%;
 }
 .hidden{

@@ -1,5 +1,6 @@
 var socket;
 var blobs = [];
+var prevblobs = [];
 var omega = 0.1;
 var fr = 30;
 var blob;
@@ -14,25 +15,44 @@ function setup() {
 
   p = document.getElementById('peopleCounter');
   div = document.getElementById('inputDiv');
-  nameInput = createInput('Name').parent(inputHolder).class('nameInput');
+  nameInput = createInput('').parent(inputHolder).id('nameInput');
+  document.getElementById('nameInput').placeholder = "Name";
   createSpan("").parent(inputHolder).class('bar');
 
   nameInput.changed(startOfGame);
 
-  socket = io.connect('https://bloby-game.herokuapp.com/');
+  socket = io.connect('http://localhost:5000/');
 
 	socket.on('id', getId);
   socket.on('count', updateCount);
   socket.on('heartbeat', heartbeat);
 
 	function getId(data) {
-		blob = new Blob(400 + Math.random()*200,300 + Math.random()*200,random(360),data);
+		blob = new Blob(0,0,random(360),data);
 	}
   function updateCount(data) {
     p.innerHTML = "Počet pripojených ľudí : " + data;
   }
   function heartbeat(data) {
     blobs = data;
+  }
+}
+
+function lerpUpdate(){
+  for (var i = 0; i < blobs.length; i++) {
+    if (prevblobs[i]) {
+      var posX = lerp(prevblobs[i].pos.x,blobs[i].pos.x, .75);
+      var posY = lerp(prevblobs[i].pos.y,blobs[i].pos.y, .75);
+      var f = lerp(prevblobs[i].f,blobs[i].f, .75);
+      var t = lerp(prevblobs[i].theta,blobs[i].theta, .75);
+      prevblobs[i] = blobs[i];
+      prevblobs[i].pos.x = posX;
+      prevblobs[i].pos.y = posY;
+      prevblobs[i].f = f;
+      prevblobs[i].theta = t;
+    }else {
+      prevblobs[i] = blobs[i];
+    }
   }
 }
 
@@ -91,22 +111,24 @@ function draw() {
   strokeWeight(1);
   noStroke();
 
-  for (var i = 0; i < blobs.length; i++) {
+  lerpUpdate();
+
+  for (var i = 0; i < prevblobs.length; i++) {
 
       push();
-      translate(blobs[i].pos.x,blobs[i].pos.y);
-      rotate(blobs[i].theta);
+      translate(prevblobs[i].pos.x,prevblobs[i].pos.y);
+      rotate(prevblobs[i].theta);
       stroke(0,0,255);
       fill(0,150,255);
       ellipse(0, 0, 60, 60);
-      rect(33, -5, blobs[i].f + 10, 10);
+      rect(33, -5, prevblobs[i].f + 10, 10);
       pop();
       fill(0);
       textAlign(CENTER,CENTER);
       textSize(30);
-      text(blobs[i].score,blobs[i].pos.x,blobs[i].pos.y);
+      text(prevblobs[i].score,prevblobs[i].pos.x,prevblobs[i].pos.y);
       textSize(15);
-      text(blobs[i].name,blobs[i].pos.x,blobs[i].pos.y+40);
+      text(prevblobs[i].name,prevblobs[i].pos.x,prevblobs[i].pos.y+40);
 
   }
 }

@@ -17,10 +17,28 @@ var peopleCounter = 0;
 var omega = 0.1;
 var fr = 30;
 
+var add = function(a,b) { return { x:(a.x+b.x).fixed(), y:(a.y+b.y).fixed() }; };
+var sub = function(a,b) { return { x:(a.x-b.x).fixed(),y:(a.y-b.y).fixed() }; };
+var mult = function(a,b) { return {x: (a.x*b).fixed() , y:(a.y*b).fixed() }; };
+var mag = function(a) {return (Math.sqrt(Math.pow(a.x,2)+Math.pow(a.y,2))).fixed()};
+
 function byID(id){
   for (var i = 0; i < blobs.length; i++) {
     if(id === blobs[i].id){
       return blobs[i];
+    }
+  }
+}
+function newLocation() {
+  while (true) {
+    var bool = true;
+    var newPos = { x : (350 + Math.random()*300), y : (250 + Math.random()*300) };
+    for (var i = 0; i < blobs.length; i++) {
+      if( mag(sub(blobs[i].pos , newPos)) < 80) bool = false;
+
+    }
+    if (bool) {
+      return newPos;
     }
   }
 }
@@ -49,7 +67,7 @@ function Blob(_x,_y,t,id,n) {
   }
 
   this.applyForce = function(f){
-    this.acc = this.add(this.acc,f);
+    this.acc = add(this.acc,f);
   }
 
   this.charge = function(){
@@ -68,9 +86,9 @@ function Blob(_x,_y,t,id,n) {
   }
 
   this.update = function(){
-    this.vel = this.add(this.vel,this.acc);
-    this.pos = this.add(this.pos,this.vel);
-    this.acc = this.mult(this.acc, 0);
+    this.vel = add(this.vel,this.acc);
+    this.pos = add(this.pos,this.vel);
+    this.acc = mult(this.acc, 0);
     if (this.rotating) {
       this.theta += this.omega;
     }
@@ -79,7 +97,7 @@ function Blob(_x,_y,t,id,n) {
   }
 
   this.borders = function(){
-    if (this.mag(this.sub(this.pos,{x:500,y:400}))>320) {
+    if (mag(sub(this.pos,{x:500,y:400}))>320) {
       this.score--;
       if (this.touch) {
         if (byID(this.touch)) {
@@ -87,9 +105,10 @@ function Blob(_x,_y,t,id,n) {
         }
         this.touch = undefined;
       }
-      this.pos.x = 400 + Math.random()*200;
-      this.pos.y = 300 + Math.random()*200;
-      this.vel = this.mult(this.vel,0);
+      var newPos = newLocation();
+      this.pos.x = newPos.x;
+      this.pos.y = newPos.y;
+      this.vel = mult(this.vel,0);
       this.ch = -20;
       this.f = 0;
       this.rotating = true;
@@ -97,13 +116,13 @@ function Blob(_x,_y,t,id,n) {
   }
 
   this.collision = function(other){
-    var dif = this.sub(this.pos,other.pos);
-    var dist = this.mag(dif);
+    var dif = sub(this.pos,other.pos);
+    var dist = mag(dif);
     if (dist <= this.r*2) {
-      dif = this.mult(dif, 1/dist);
+      dif = mult(dif, 1/dist);
       var p = this.vel.x * dif.x + this.vel.y * dif.y - other.vel.x * dif.x - other.vel.y * dif.y;
-      var f1 = this.mult(dif, -p);
-      var f2 = this.mult(dif, p);
+      var f1 = mult(dif, -p);
+      var f2 = mult(dif, p);
       this.applyForce(f1);
       other.applyForce(f2);
       this.touch = other.id;
@@ -111,13 +130,7 @@ function Blob(_x,_y,t,id,n) {
     }
   }
 
-  this.add = function(a,b) { return { x:(a.x+b.x).fixed(), y:(a.y+b.y).fixed() }; };
-      //Subtract a 2d vector with another one and return the resulting vector
-  this.sub = function(a,b) { return { x:(a.x-b.x).fixed(),y:(a.y-b.y).fixed() }; };
-      //Multiply a 2d vector with a scalar value and return the resulting vector
-  this.mult = function(a,b) { return {x: (a.x*b).fixed() , y:(a.y*b).fixed() }; };
 
-  this.mag = function(a) {return (Math.sqrt(Math.pow(a.x,2)+Math.pow(a.y,2))).fixed()};
 }
 
 
@@ -164,7 +177,8 @@ function newConnection(socket) {
     io.sockets.emit("count",peopleCounter);
   }
   function start(data) {
-    var blob = new Blob(data.x,data.y,data.t,data.id,data.name);
+    var newPos = newLocation();
+    var blob = new Blob(newPos.x,newPos.y,data.t,data.id,data.name);
     blobs.push(blob);
   }
   function press(id) {
