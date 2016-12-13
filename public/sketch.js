@@ -8,6 +8,8 @@ var p;
 var div;
 var nameInput;
 var started = false;
+var lerpValue = 0.5;
+var indicator = true;
 
 function setup() {
   frameRate(fr);
@@ -34,17 +36,21 @@ function setup() {
     p.innerHTML = "Počet pripojených ľudí : " + data;
   }
   function heartbeat(data) {
+    prevblobs = blobs;
+    data = JSON.parse(data);
     blobs = data;
+    fill(255,0,0);
+    ellipse(20,20,10,10);
   }
 }
 
 function lerpUpdate(){
   for (var i = 0; i < blobs.length; i++) {
     if (prevblobs[i]) {
-      var posX = lerp(prevblobs[i].pos.x,blobs[i].pos.x, .75);
-      var posY = lerp(prevblobs[i].pos.y,blobs[i].pos.y, .75);
-      var f = lerp(prevblobs[i].f,blobs[i].f, .75);
-      var t = lerp(prevblobs[i].theta,blobs[i].theta, .75);
+      var posX = lerp(prevblobs[i].pos.x,blobs[i].pos.x, lerpValue);
+      var posY = lerp(prevblobs[i].pos.y,blobs[i].pos.y, lerpValue);
+      var f = lerp(prevblobs[i].f,blobs[i].f, lerpValue);
+      var t = lerp(prevblobs[i].theta,blobs[i].theta, lerpValue);
       prevblobs[i] = blobs[i];
       prevblobs[i].pos.x = posX;
       prevblobs[i].pos.y = posY;
@@ -104,6 +110,14 @@ function touchEnded() {
 
 function draw() {
   background(255);
+  if (indicator) {
+    fill(0,0,255);
+    ellipse(40,20,10,10);
+    indicator = false;
+  }else {
+    indicator = true;
+  }
+
   noFill();
   strokeWeight(10);
   stroke(100,200,0);

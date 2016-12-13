@@ -139,7 +139,8 @@ setInterval(heartbeat,33);
 setInterval(physics,25);
 
 function heartbeat() {
-  io.sockets.emit("heartbeat", blobs);
+  var blobsJSON = JSON.stringify(blobs);
+  io.sockets.emit("heartbeat", blobsJSON);
 }
 function physics() {
   for (var i = 0; i < blobs.length-1; i++) {
@@ -156,7 +157,7 @@ io.sockets.on('connection', newConnection);
 
 function newConnection(socket) {
   peopleCounter++;
-  io.sockets.emit("count",peopleCounter);
+  // io.sockets.emit("count",peopleCounter);
 
   var id = uuid();
   socket.emit("id",id);
@@ -174,7 +175,7 @@ function newConnection(socket) {
     }
     console.log(id);
     peopleCounter--;
-    io.sockets.emit("count",peopleCounter);
+    // io.sockets.emit("count",peopleCounter);
   }
   function start(data) {
     var newPos = newLocation();
