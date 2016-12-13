@@ -14,7 +14,7 @@ var io = socket(server);
 
 var blobs = [];
 var peopleCounter = 0;
-var omega = 0.1;
+var omega = 0.06;
 
 var add = function(a,b) { return { x:(a.x+b.x).fixed(), y:(a.y+b.y).fixed() }; };
 var sub = function(a,b) { return { x:(a.x-b.x).fixed(),y:(a.y-b.y).fixed() }; };
@@ -70,7 +70,7 @@ function Blob(_x,_y,t,id,n) {
   }
 
   this.charge = function(){
-    this.ch = 3;
+    this.ch = 2.5;
     this.omega *= -1;
     this.rotating = false;
   }
@@ -92,7 +92,7 @@ function Blob(_x,_y,t,id,n) {
       this.theta += this.omega;
     }
     this.f += this.ch;
-    this.f = Math.max(0,Math.min(100,this.f));
+    this.f = Math.max(0,Math.min(60,this.f));
   }
 
   this.borders = function(){
