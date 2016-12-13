@@ -15,7 +15,6 @@ var io = socket(server);
 var blobs = [];
 var peopleCounter = 0;
 var omega = 0.1;
-var fr = 30;
 
 var add = function(a,b) { return { x:(a.x+b.x).fixed(), y:(a.y+b.y).fixed() }; };
 var sub = function(a,b) { return { x:(a.x-b.x).fixed(),y:(a.y-b.y).fixed() }; };
@@ -135,8 +134,8 @@ function Blob(_x,_y,t,id,n) {
 
 
 
-setInterval(heartbeat,33);
-setInterval(physics,25);
+setInterval(heartbeat,16);
+setInterval(physics,16);
 
 function heartbeat() {
   var blobsJSON = JSON.stringify(blobs);
