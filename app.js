@@ -48,7 +48,7 @@ Number.prototype.fixed = function(n) { n = n || 3; return parseFloat(this.toFixe
 
 function Rope(x,y,id){
   this.spring = [];
-  this.dist = 30;
+  this.dist = 25;
   this.id = id;
   this.joint = {x:x, y:y};
   this.t = 0;
