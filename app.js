@@ -13,6 +13,7 @@ var socket = require('socket.io');
 var io = socket(server);
 
 var blobs = [];
+var hooks = [];
 var peopleCounter = 0;
 var omega = 0.06;
 
@@ -45,6 +46,100 @@ function newLocation() {
 
 Number.prototype.fixed = function(n) { n = n || 3; return parseFloat(this.toFixed(n)); };
 
+function Rope(x,y,id){
+  this.spring = [];
+  this.dist = 30;
+  this.id = id;
+  this.joint = {x:x, y:y};
+  this.t = 0;
+  this.active = false;
+
+  this.run = function() {
+    for(var i = 0; i < this.spring.length; i++){
+      var a = this.spring[i];
+      if(i == 0){
+        var m = this.joint;
+        var n = this.spring[i+1].pos;
+      }else if(i == this.spring.length-1){
+        var m = this.spring[i-1].pos;
+        var n = byID(this.id).pos;
+      }else{
+        var m = this.spring[i-1].pos;
+        var n = this.spring[i+1].pos;
+      }
+      a.run(m,n);
+    }
+    this.t += 0.016;
+    if (this.t > 3) {
+      hooks.splice(0,1);
+    }
+    if (this.spring[this.spring.length - 1]) {
+      this.pull(byID(this.id));
+    }
+  }
+
+  this.addSpring = function(){
+    var diff = sub(this.joint,byID(this.id).pos);
+    var dist = mag(diff);
+    var count = Math.ceil(dist/this.dist);
+    var diff = mult(diff, 1/count);
+    for (var i = 1; i < count-1; i++) {
+      var x = byID(this.id).pos.x + i*diff.x;
+      var y = byID(this.id).pos.y + i*diff.y;
+      this.spring.push(new SpringNode(x,y));
+    }
+    this.active = true;
+  }
+  this.pull = function(blob) {
+    var a = sub(this.spring[this.spring.length - 1].pos, blob.pos);
+    var dist = mag(a);
+    if(dist > 10){
+      a = mult(a,1/mag(a));
+      dist -= 10;
+      var newMag = dist * 0.003;
+      a = mult(a,newMag);
+      blob.acc = add(blob.acc,a);
+    }
+  }
+}
+
+function SpringNode(_x,_y) {
+  this.stiffness = 0.4;
+  this.damping = 0.70;
+
+  this.pos = {x:_x,y:_y};
+  this.vel = {x:0,y:0};
+  this.acc = {x:0,y:0};
+  this.radius = 5;
+
+  this.run = function(prev1, prev2) {
+    this.update(prev1.x,prev1.y, prev2.x,prev2.y);
+    // this.display(prev1.x,prev1.y);
+  }
+
+ this.update = function(x1, y1, x2, y2) {
+    var target1 = {x:x1,y:y1};
+    var target2 = {x:x2,y:y2};
+    this.applyForce(target1);
+    this.applyForce(target2);
+    this.vel = mult(add(this.vel,this.acc),this.damping);
+    this.pos = add(this.pos,this.vel);
+    this.acc = mult(this.acc, 0);
+  }
+
+  this.applyForce = function(t){
+    var a = sub(t, this.pos);
+    var dist = mag(a);
+    if(dist > 10){
+      a = mult(a,1/mag(a));
+      dist -= 10;
+      var newMag = dist * this.stiffness;
+      a = mult(a,newMag);
+      this.acc = add(this.acc,a);
+    }
+  }
+}
+
 function Blob(_x,_y,t,id,n) {
   this.pos = {x:_x,y:_y};
   this.vel = {x:0,y:0};
@@ -59,6 +154,8 @@ function Blob(_x,_y,t,id,n) {
   this.name = n;
   this.score = 0;
   this.touch;
+  this.hooked = false;
+  this.hookID;
 
   this.run = function () {
     this.borders();
@@ -95,9 +192,28 @@ function Blob(_x,_y,t,id,n) {
     this.f = Math.max(0,Math.min(60,this.f));
   }
 
+  this.throwHook = function(id,x,y) {
+    var hook = new Rope(x,y,id);
+    hook.addSpring();
+    hooks.push(hook);
+    this.hooked = true;
+  }
+
   this.borders = function(){
     if (mag(sub(this.pos,{x:500,y:400}))>320) {
       this.score--;
+      if (this.hooked) {
+        this.hooked = false;
+        for (var i = 0; i < hooks.length; i++) {
+          if(hooks[i].id == this.id){
+            hooks.splice(i,1);
+          }
+        }
+      }
+      this.vel = mult(this.vel,0);
+      this.ch = -20;
+      this.f = 0;
+      this.rotating = true;
       if (this.touch) {
         if (byID(this.touch)) {
           byID(this.touch).score ++;
@@ -107,10 +223,6 @@ function Blob(_x,_y,t,id,n) {
       var newPos = newLocation();
       this.pos.x = newPos.x;
       this.pos.y = newPos.y;
-      this.vel = mult(this.vel,0);
-      this.ch = -20;
-      this.f = 0;
-      this.rotating = true;
     }
   }
 
@@ -139,12 +251,19 @@ setInterval(physics,16);
 
 function heartbeat() {
   var blobsJSON = JSON.stringify(blobs);
-  io.sockets.emit("heartbeat", blobsJSON);
+  var hooksJSON = JSON.stringify(hooks);
+  var data = {blobs : blobsJSON, hooks : hooksJSON};
+  io.sockets.emit("heartbeat", data);
 }
 function physics() {
   for (var i = 0; i < blobs.length-1; i++) {
     for (var j = i+1; j < blobs.length; j++) {
         blobs[i].collision(blobs[j]);
+    }
+  }
+  for (var i = 0; i < hooks.length; i++) {
+    if (hooks[i].active) {
+      hooks[i].run();
     }
   }
   for (var i = 0; i < blobs.length; i++) {
@@ -165,6 +284,8 @@ function newConnection(socket) {
   socket.on('start', start);
   socket.on('press', press);
   socket.on('release', release);
+  socket.on('hook', hook);
+  socket.on('left', left);
 
   function disconnect() {
     for (var i = 0; i < blobs.length; i++) {
@@ -186,6 +307,21 @@ function newConnection(socket) {
   }
   function release(id) {
     byID(id).release();
+  }
+  function hook(data) {
+    if (!byID(data.id).hooked) {
+      byID(data.id).throwHook(data.id,data.x,data.y);
+      setTimeout(function () {
+        byID(id).hooked = false;
+      },7000);
+    }
+  }
+  function left(id) {
+    for (var i = 0; i < hooks.length; i++) {
+      if(hooks[i].id == id){
+        hooks.splice(i,1);
+      }
+    }
   }
 
 }

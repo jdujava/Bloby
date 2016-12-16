@@ -1,6 +1,7 @@
 var socket;
 var blobs = [];
 var prevblobs = [];
+var hooks = [];
 var omega = 0.1;
 var fr = 30;
 var blob;
@@ -10,10 +11,12 @@ var nameInput;
 var started = false;
 var lerpValue = 0.5;
 var indicator = true;
+var coolRect = 75;
 
 function setup() {
   frameRate(fr);
   createCanvas(1000,800);
+  textAlign(CENTER,CENTER);
 
   p = document.getElementById('peopleCounter');
   div = document.getElementById('inputDiv');
@@ -29,16 +32,18 @@ function setup() {
   socket.on('count', updateCount);
   socket.on('heartbeat', heartbeat);
 
-	function getId(data) {
-		blob = new Blob(0,0,random(360),data);
+	function getId(id) {
+		blob = new Blob(0,0,random(360),id);
 	}
   function updateCount(data) {
     p.innerHTML = "Počet pripojených ľudí : " + data;
   }
   function heartbeat(data) {
     prevblobs = blobs;
-    data = JSON.parse(data);
-    blobs = data;
+    blobsData = JSON.parse(data.blobs);
+    hooksData = JSON.parse(data.hooks);
+    blobs = blobsData;
+    hooks = hooksData;
     fill(255,0,0);
     ellipse(20,20,10,10);
   }
@@ -80,30 +85,60 @@ function startOfGame () {
   },1000);
 }
 
+function byID(id){
+  for (var i = 0; i < blobs.length; i++) {
+    if(id === blobs[i].id){
+      return blobs[i];
+    }
+  }
+}
+
 function keyPressed() {
+  if (started && key === 'Q' && coolRect >= 75) {
+    var mpos = createVector(mouseX,mouseY);
+    var bpos = byID(blob.id).pos;
+    bpos = createVector(bpos.x,bpos.y);
+    console.log(mpos);
+    mpos.sub(bpos);
+    mpos.setMag(constrain(mpos.mag(),100,200));
+    var point = p5.Vector.add(bpos,mpos);
+    var data = {
+      id: blob.id,
+      x : point.x,
+      y : point.y
+    }
+    socket.emit('hook', data);
+    coolRect = 0;
+    var cooldown = setInterval(function () {
+      coolRect += 0.5357;
+      if (coolRect >= 75) {
+        clearInterval(cooldown);
+      }
+    },50);
+  }
   if (started && key === ' ') {
-    blob.charge();
     socket.emit('press', blob.id);
   }
+
 }
 
 function touchStarted() {
   if (started) {
-    blob.charge();
     socket.emit('press', blob.id);
   }
 }
 
 function keyReleased() {
+  if (started && key === 'Q') {
+  	socket.emit('left', blob.id);
+  }
   if (started && key === ' ') {
-    blob.release();
   	socket.emit('release', blob.id);
   }
 }
 
 function touchEnded() {
   if (started) {
-    blob.release();
     socket.emit('release', blob.id);
   }
 }
@@ -129,6 +164,8 @@ function draw() {
 
   for (var i = 0; i < prevblobs.length; i++) {
 
+    noStroke();
+
       push();
       translate(prevblobs[i].pos.x,prevblobs[i].pos.y);
       rotate(prevblobs[i].theta);
@@ -138,11 +175,29 @@ function draw() {
       rect(33, -5, prevblobs[i].f + 10, 10);
       pop();
       fill(0);
-      textAlign(CENTER,CENTER);
       textSize(30);
       text(prevblobs[i].score,prevblobs[i].pos.x,prevblobs[i].pos.y);
       textSize(15);
       text(prevblobs[i].name,prevblobs[i].pos.x,prevblobs[i].pos.y+40);
 
+      for (var n = 0; n < hooks.length; n++) {
+        noStroke();
+        fill(0,255,0);
+        ellipse(hooks[n].joint.x, hooks[n].joint.y, 15, 15);
+        fill(255,0,0);
+        for (var m = 0; m < hooks[n].spring.length; m++) {
+          ellipse(hooks[n].spring[m].pos.x, hooks[n].spring[m].pos.y, 10, 10);
+        }
+      }
+
+      fill(0,200,255);
+      rect(775,50,75,coolRect);
+      textSize(50);
+      fill(0);
+      text("Q",812.5,87.5);
+      stroke(0,50,150);
+      strokeWeight(3);
+      noFill();
+      rect(775,50,75,75);
   }
 }
