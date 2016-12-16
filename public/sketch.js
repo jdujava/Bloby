@@ -165,6 +165,7 @@ function draw() {
   for (var i = 0; i < prevblobs.length; i++) {
 
     noStroke();
+    strokeWeight(1);
 
       push();
       translate(prevblobs[i].pos.x,prevblobs[i].pos.y);

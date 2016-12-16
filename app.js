@@ -293,6 +293,11 @@ function newConnection(socket) {
         blobs.splice(i,1);
       }
     }
+    for (var i = 0; i < hooks.length; i++) {
+      if(hooks[i].id == id){
+        hooks.splice(i,1);
+      }
+    }
     console.log(id);
     peopleCounter--;
     // io.sockets.emit("count",peopleCounter);
@@ -312,7 +317,9 @@ function newConnection(socket) {
     if (!byID(data.id).hooked) {
       byID(data.id).throwHook(data.id,data.x,data.y);
       setTimeout(function () {
-        byID(id).hooked = false;
+        if (byID(id)) {
+          byID(id).hooked = false;
+        }
       },7000);
     }
   }
