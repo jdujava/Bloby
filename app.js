@@ -48,26 +48,32 @@ Number.prototype.fixed = function(n) { n = n || 3; return parseFloat(this.toFixe
 
 function Rope(x,y,id){
   this.spring = [];
-  this.dist = 25;
+  this.dist = 30;
   this.id = id;
   this.joint = {x:x, y:y};
   this.t = 0;
   this.active = false;
 
   this.run = function() {
-    for(var i = 0; i < this.spring.length; i++){
-      var a = this.spring[i];
-      if(i == 0){
-        var m = this.joint;
-        var n = this.spring[i+1].pos;
-      }else if(i == this.spring.length-1){
-        var m = this.spring[i-1].pos;
-        var n = byID(this.id).pos;
-      }else{
-        var m = this.spring[i-1].pos;
-        var n = this.spring[i+1].pos;
+    if (this.spring.length == 1) {
+      var m = this.joint;
+      var n = byID(this.id).pos;
+      this.spring[0].run(m,n);
+    }else {
+      for(var i = 0; i < this.spring.length; i++){
+        var a = this.spring[i];
+        if(i == 0){
+          var m = this.joint;
+          var n = this.spring[i+1].pos;
+        }else if(i == this.spring.length-1){
+          var m = this.spring[i-1].pos;
+          var n = byID(this.id).pos;
+        }else{
+          var m = this.spring[i-1].pos;
+          var n = this.spring[i+1].pos;
+        }
+        a.run(m,n);
       }
-      a.run(m,n);
     }
     this.t += 0.016;
     if (this.t > 3) {

@@ -26,7 +26,7 @@ function setup() {
 
   nameInput.changed(startOfGame);
 
-  socket = io.connect('https://bloby-game.herokuapp.com/');
+  socket = io.connect('http://localhost:5000/');
 
 	socket.on('id', getId);
   socket.on('count', updateCount);
@@ -100,7 +100,7 @@ function keyPressed() {
     bpos = createVector(bpos.x,bpos.y);
     console.log(mpos);
     mpos.sub(bpos);
-    mpos.setMag(constrain(mpos.mag(),121,200));
+    mpos.setMag(constrain(mpos.mag(),90,150));
     var point = p5.Vector.add(bpos,mpos);
     var data = {
       id: blob.id,
