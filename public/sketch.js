@@ -26,7 +26,7 @@ function setup() {
 
   nameInput.changed(startOfGame);
 
-  socket = io.connect('http://localhost:5000/');
+  socket = io.connect('https://bloby-game.herokuapp.com/');
 
 	socket.on('id', getId);
   socket.on('count', updateCount);
