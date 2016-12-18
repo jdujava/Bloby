@@ -161,6 +161,7 @@ function Blob(_x,_y,t,id,n) {
   this.score = 0;
   this.touch;
   this.hooked = false;
+  this.flashed = false;
   this.hookID;
 
   this.run = function () {
@@ -203,6 +204,12 @@ function Blob(_x,_y,t,id,n) {
     hook.addSpring();
     hooks.push(hook);
     this.hooked = true;
+  }
+
+  this.flash = function(x,y) {
+    this.pos.x = x;
+    this.pos.y = y;
+    this.flashed = true;
   }
 
   this.borders = function(){
@@ -293,6 +300,7 @@ function newConnection(socket) {
   socket.on('release', release);
   socket.on('hook', hook);
   socket.on('left', left);
+  socket.on('flash', flash);
 
   function disconnect() {
     for (var i = 0; i < blobs.length; i++) {
@@ -335,6 +343,16 @@ function newConnection(socket) {
       if(hooks[i].id == id){
         hooks.splice(i,1);
       }
+    }
+  }
+  function flash(data) {
+    if (!byID(data.id).flashed) {
+      byID(data.id).flash(data.x,data.y);
+      setTimeout(function () {
+        if (byID(id)) {
+          byID(id).flashed = false;
+        }
+      },7000);
     }
   }
 

@@ -9,7 +9,8 @@ var div;
 var nameInput;
 var started = false;
 var lerpValue = 0.5;
-var coolRect = 75;
+var coolRectQ = 75;
+var coolRectW = 75;
 var ping = 0;
 
 function setup() {
@@ -90,26 +91,46 @@ function byID(id){
   }
 }
 
+function constrainMousePosition(min,max){
+  var mpos = createVector(mouseX,mouseY);
+  var bpos = byID(blob.id).pos;
+  bpos = createVector(bpos.x,bpos.y);
+  mpos.sub(bpos);
+  mpos.setMag(constrain(mpos.mag(),min,max));
+  var point = p5.Vector.add(bpos,mpos);
+  return point;
+}
+
 function keyPressed() {
-  if (started && key === 'Q' && coolRect >= 75) {
-    var mpos = createVector(mouseX,mouseY);
-    var bpos = byID(blob.id).pos;
-    bpos = createVector(bpos.x,bpos.y);
-    console.log(mpos);
-    mpos.sub(bpos);
-    mpos.setMag(constrain(mpos.mag(),90,150));
-    var point = p5.Vector.add(bpos,mpos);
+  if (started && key === 'Q' && coolRectQ >= 75) {
+    var point = constrainMousePosition(90,150);
     var data = {
       id: blob.id,
       x : point.x,
       y : point.y
     }
     socket.emit('hook', data);
-    coolRect = 0;
-    var cooldown = setInterval(function () {
-      coolRect += 0.5357;
-      if (coolRect >= 75) {
-        clearInterval(cooldown);
+    coolRectQ = 0;
+    var cooldownQ = setInterval(function () {
+      coolRectQ += 0.5357;
+      if (coolRectQ >= 75) {
+        clearInterval(cooldownQ);
+      }
+    },50);
+  }
+  if (started && key === 'W' && coolRectW >= 75) {
+    var point = constrainMousePosition(50,100);
+    var data = {
+      id: blob.id,
+      x : point.x,
+      y : point.y
+    }
+    socket.emit('flash', data);
+    coolRectW = 0;
+    var cooldownW = setInterval(function () {
+      coolRectW += 0.5357;
+      if (coolRectW >= 75) {
+        clearInterval(cooldownW);
       }
     },50);
   }
@@ -187,13 +208,16 @@ function draw() {
       }
 
       fill(0,200,255);
-      rect(775,50,75,coolRect);
+      rect(775,50,75,coolRectQ);
+      rect(875,50,75,coolRectW);
       textSize(50);
       fill(0);
       text("Q",812.5,87.5);
+      text("W",912.5,87.5);
       stroke(0,50,150);
       strokeWeight(3);
       noFill();
       rect(775,50,75,75);
+      rect(875,50,75,75);
   }
 }
