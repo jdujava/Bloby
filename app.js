@@ -87,7 +87,7 @@ function Rope(x,y,id){
   this.addSpring = function(){
     var diff = sub(this.joint,byID(this.id).pos);
     var dist = mag(diff);
-    var count = Math.ceil(dist/this.dist);
+    var count = Math.max(Math.ceil(dist/this.dist),3);
     var diff = mult(diff, 1/count);
     for (var i = 1; i < count-1; i++) {
       var x = byID(this.id).pos.x + i*diff.x;
@@ -258,7 +258,8 @@ setInterval(physics,16);
 function heartbeat() {
   var blobsJSON = JSON.stringify(blobs);
   var hooksJSON = JSON.stringify(hooks);
-  var data = {blobs : blobsJSON, hooks : hooksJSON};
+  var time = new Date().getTime();
+  var data = {blobs : blobsJSON, hooks : hooksJSON, t : time};
   io.sockets.emit("heartbeat", data);
 }
 function physics() {

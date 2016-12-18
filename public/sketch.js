@@ -3,18 +3,16 @@ var blobs = [];
 var prevblobs = [];
 var hooks = [];
 var omega = 0.1;
-var fr = 30;
 var blob;
 var p;
 var div;
 var nameInput;
 var started = false;
 var lerpValue = 0.5;
-var indicator = true;
 var coolRect = 75;
+var ping = 0;
 
 function setup() {
-  frameRate(fr);
   createCanvas(1000,800);
   textAlign(CENTER,CENTER);
 
@@ -26,7 +24,7 @@ function setup() {
 
   nameInput.changed(startOfGame);
 
-  socket = io.connect('https://bloby-game.herokuapp.com/');
+  socket = io.connect('http://localhost:5000/');
 
 	socket.on('id', getId);
   socket.on('count', updateCount);
@@ -44,8 +42,7 @@ function setup() {
     hooksData = JSON.parse(data.hooks);
     blobs = blobsData;
     hooks = hooksData;
-    fill(255,0,0);
-    ellipse(20,20,10,10);
+    ping = new Date().getTime() - data.t;
   }
 }
 
@@ -145,13 +142,11 @@ function touchEnded() {
 
 function draw() {
   background(255);
-  if (indicator) {
-    fill(0,0,255);
-    ellipse(40,20,10,10);
-    indicator = false;
-  }else {
-    indicator = true;
-  }
+  noStroke();
+  fill(0);
+  textSize(10);
+  text("FPS : " + Math.floor(frameRate()),20,20);
+  text("Ping : " + ping,20,40);
 
   noFill();
   strokeWeight(10);
