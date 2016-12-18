@@ -206,9 +206,19 @@ function Blob(_x,_y,t,id,n) {
     this.hooked = true;
   }
 
-  this.flash = function(x,y) {
-    this.pos.x = x;
-    this.pos.y = y;
+  this.flash = function(_x,_y) {
+    var newPos = { x : _x, y : _y };
+    for (var i = 0; i < blobs.length; i++) {
+      var diff = sub(newPos , blobs[i].pos);
+      if( mag(diff) < 62){
+        var len = 62 - mag(diff);
+        diff = mult(diff,len/mag(diff));
+        newPos = add(newPos,diff);
+        break;
+      }
+    }
+    this.pos.x = newPos.x;
+    this.pos.y = newPos.y;
     this.flashed = true;
   }
 
@@ -261,12 +271,12 @@ function Blob(_x,_y,t,id,n) {
 
 setInterval(heartbeat,16);
 setInterval(physics,16);
+setInterval(ping, 100);
 
 function heartbeat() {
   var blobsJSON = JSON.stringify(blobs);
   var hooksJSON = JSON.stringify(hooks);
-  var time = new Date().getTime();
-  var data = {blobs : blobsJSON, hooks : hooksJSON, t : time};
+  var data = {blobs : blobsJSON, hooks : hooksJSON};
   io.sockets.emit("heartbeat", data);
 }
 function physics() {
@@ -283,6 +293,10 @@ function physics() {
   for (var i = 0; i < blobs.length; i++) {
     blobs[i].run();
   }
+}
+function ping() {
+   var time = new Date().getTime();
+   io.sockets.emit("ping", time);
 }
 
 io.sockets.on('connection', newConnection);

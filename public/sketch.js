@@ -12,6 +12,7 @@ var lerpValue = 0.5;
 var coolRectQ = 75;
 var coolRectW = 75;
 var ping = 0;
+var fps = 0;
 
 function setup() {
   createCanvas(1000,800);
@@ -29,6 +30,7 @@ function setup() {
 
 	socket.on('id', getId);
   socket.on('count', updateCount);
+  socket.on('ping', getPing);
   socket.on('heartbeat', heartbeat);
 
 	function getId(id) {
@@ -37,13 +39,16 @@ function setup() {
   function updateCount(data) {
     p.innerHTML = "Počet pripojených ľudí : " + data;
   }
+  function getPing(time) {
+    ping = Math.floor(new Date().getTime() - time);
+    console.log(ping);
+  }
   function heartbeat(data) {
     prevblobs = blobs;
     blobsData = JSON.parse(data.blobs);
     hooksData = JSON.parse(data.hooks);
     blobs = blobsData;
     hooks = hooksData;
-    ping = Math.floor(new Date().getTime() - data.t);
   }
 }
 
@@ -166,8 +171,8 @@ function draw() {
   noStroke();
   fill(0);
   textSize(10);
-  text("FPS : " + Math.floor(frameRate()),20,20);
-  text("Ping : " + ping,20,40);
+  text("FPS : " + fps,20,20);
+  text("Ping : " + ping ,20,40);
 
   noFill();
   strokeWeight(10);
@@ -221,3 +226,7 @@ function draw() {
       rect(875,50,75,75);
   }
 }
+
+setInterval(function () {
+  fps = Math.floor(frameRate());
+},200)
