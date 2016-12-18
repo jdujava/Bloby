@@ -43,7 +43,7 @@ function setup() {
     hooksData = JSON.parse(data.hooks);
     blobs = blobsData;
     hooks = hooksData;
-    ping = new Date().getTime() - data.t;
+    ping = Math.floor(new Date().getTime() - data.t);
   }
 }
 
@@ -119,7 +119,7 @@ function keyPressed() {
     },50);
   }
   if (started && key === 'W' && coolRectW >= 75) {
-    var point = constrainMousePosition(50,100);
+    var point = constrainMousePosition(30,150);
     var data = {
       id: blob.id,
       x : point.x,
