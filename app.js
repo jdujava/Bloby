@@ -310,7 +310,9 @@ function newConnection(socket) {
   socket.on('hook', hook);
   socket.on('left', left);
   socket.on('flash', flash);
-  socket.on('ping', ping);
+  socket.on('plsRespond', function () {
+    socket.emit("getPing");
+  });
 
   function disconnect() {
     for (var i = 0; i < blobs.length; i++) {
@@ -364,9 +366,6 @@ function newConnection(socket) {
         }
       },7000);
     }
-  }
-  function ping(time) {
-    socket.emit("ping",time);
   }
 
 }
