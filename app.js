@@ -14,6 +14,7 @@ var io = socket(server);
 
 var blobs = [];
 var hooks = [];
+var pillars = [];
 var peopleCounter = 0;
 var omega = 0.06;
 
@@ -146,6 +147,19 @@ function SpringNode(_x,_y) {
   }
 }
 
+function Pillar(_x,_y,id){
+  this.pos = {x:_x,y:_y};
+  this.id = id;
+  this.t = 0;
+
+  this.run = function () {
+    this.t += 0.016;
+    if (this.t > 3) {
+      pillars.splice(0,1);
+    }
+  }
+}
+
 function Blob(_x,_y,t,id,n) {
   this.pos = {x:_x,y:_y};
   this.vel = {x:0,y:0};
@@ -162,6 +176,7 @@ function Blob(_x,_y,t,id,n) {
   this.touch;
   this.hooked = false;
   this.flashed = false;
+  this.pillared = false;
   this.hookID;
 
   this.run = function () {
@@ -222,6 +237,12 @@ function Blob(_x,_y,t,id,n) {
     this.flashed = true;
   }
 
+  this.pillar = function(x,y,id) {
+    var pillar = new Pillar(x,y,id);
+    pillars.push(pillar);
+    this.pillared = true;
+  }
+
   this.borders = function(){
     if (mag(sub(this.pos,{x:500,y:400}))>320) {
       this.score--;
@@ -250,13 +271,17 @@ function Blob(_x,_y,t,id,n) {
   }
 
   this.collision = function(other){
-    var dif = sub(this.pos,other.pos);
-    var dist = mag(dif);
+    var diff = sub(this.pos,other.pos);
+    var dist = mag(diff);
     if (dist <= this.r*2) {
-      dif = mult(dif, 1/dist);
-      var p = this.vel.x * dif.x + this.vel.y * dif.y - other.vel.x * dif.x - other.vel.y * dif.y;
-      var f1 = mult(dif, -p);
-      var f2 = mult(dif, p);
+      var len = (61 - dist)*0.5;
+      diff = mult(diff,len/dist);
+      this.pos = add(this.pos,diff);
+      other.pos = sub(other.pos,diff);
+      diff = mult(diff, 1/len);
+      var p = this.vel.x * diff.x + this.vel.y * diff.y - other.vel.x * diff.x - other.vel.y * diff.y;
+      var f1 = mult(diff, -p);
+      var f2 = mult(diff, p);
       this.applyForce(f1);
       other.applyForce(f2);
       this.touch = other.id;
@@ -264,7 +289,20 @@ function Blob(_x,_y,t,id,n) {
     }
   }
 
-
+  this.hitPillar = function(pillar) {
+    var diff = sub(this.pos , pillar.pos);
+    var dist = mag(diff);
+    if( dist < this.r*2){
+      var len = 61 - dist;
+      diff = mult(diff,len/dist);
+      this.pos = add(this.pos,diff);
+      diff = mult(diff, 1/len);
+      var p = 2*this.vel.x * diff.x + 2*this.vel.y * diff.y;
+      var f1 = mult(diff, -p);
+      this.applyForce(f1);
+      if(this.id !== pillar.id) this.touch = pillar.id;
+    }
+  }
 }
 
 
@@ -275,13 +313,17 @@ setInterval(physics,16);
 function heartbeat() {
   var blobsJSON = JSON.stringify(blobs);
   var hooksJSON = JSON.stringify(hooks);
-  var data = {blobs : blobsJSON, hooks : hooksJSON};
+  var pillarsJSON = JSON.stringify(pillars);
+  var data = {blobs : blobsJSON, hooks : hooksJSON, pillars : pillarsJSON};
   io.sockets.emit("heartbeat", data);
 }
 function physics() {
+  for (var i = 0; i < pillars.length; i++) {
+    pillars[i].run();
+  }
   for (var i = 0; i < blobs.length-1; i++) {
     for (var j = i+1; j < blobs.length; j++) {
-        blobs[i].collision(blobs[j]);
+      blobs[i].collision(blobs[j]);
     }
   }
   for (var i = 0; i < hooks.length; i++) {
@@ -290,6 +332,9 @@ function physics() {
     }
   }
   for (var i = 0; i < blobs.length; i++) {
+    for (var k = 0; k < pillars.length; k++) {
+      blobs[i].hitPillar(pillars[k]);
+    }
     blobs[i].run();
   }
 }
@@ -310,6 +355,7 @@ function newConnection(socket) {
   socket.on('hook', hook);
   socket.on('left', left);
   socket.on('flash', flash);
+  socket.on('pillar', pillar);
   socket.on('plsRespond', function () {
     socket.emit("getPing");
   });
@@ -363,6 +409,16 @@ function newConnection(socket) {
       setTimeout(function () {
         if (byID(id)) {
           byID(id).flashed = false;
+        }
+      },7000);
+    }
+  }
+  function pillar(data) {
+    if (!byID(data.id).pillared) {
+      byID(data.id).pillar(data.x,data.y,data.id);
+      setTimeout(function () {
+        if (byID(id)) {
+          byID(id).pillared = false;
         }
       },7000);
     }

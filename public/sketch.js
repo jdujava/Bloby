@@ -2,6 +2,7 @@ var socket;
 var blobs = [];
 var prevblobs = [];
 var hooks = [];
+var pillars = [];
 var omega = 0.1;
 var blob;
 var p;
@@ -11,6 +12,7 @@ var started = false;
 var lerpValue = 0.5;
 var coolRectQ = 75;
 var coolRectW = 75;
+var coolRectE = 75;
 var ping = 0;
 var fps = 0;
 var startTime = 0;
@@ -27,7 +29,7 @@ function setup() {
 
   nameInput.changed(startOfGame);
 
-  socket = io.connect('https://bloby-game.herokuapp.com/');
+  socket = io.connect('http://localhost:5000/');
 
 	socket.on('id', getId);
   socket.on('count', updateCount);
@@ -47,8 +49,10 @@ function setup() {
     prevblobs = blobs;
     blobsData = JSON.parse(data.blobs);
     hooksData = JSON.parse(data.hooks);
+    pillarsData = JSON.parse(data.pillars);
     blobs = blobsData;
     hooks = hooksData;
+    pillars = pillarsData;
   }
 
   setInterval(function () {
@@ -145,6 +149,22 @@ function keyPressed() {
       }
     },50);
   }
+  if (started && key === 'E' && coolRectE >= 75) {
+    var point = constrainMousePosition(5,150);
+    var data = {
+      id: blob.id,
+      x : point.x,
+      y : point.y
+    }
+    socket.emit('pillar', data);
+    coolRectE = 0;
+    var cooldownE = setInterval(function () {
+      coolRectE += 0.5357;
+      if (coolRectE >= 75) {
+        clearInterval(cooldownE);
+      }
+    },50);
+  }
   if (started && key === ' ') {
     socket.emit('press', blob.id);
   }
@@ -189,46 +209,54 @@ function draw() {
 
   lerpUpdate();
 
-  for (var i = 0; i < prevblobs.length; i++) {
-
-    noStroke();
-    strokeWeight(1);
-
-      push();
-      translate(prevblobs[i].pos.x,prevblobs[i].pos.y);
-      rotate(prevblobs[i].theta);
-      stroke(0,0,255);
-      fill(0,150,255);
-      ellipse(0, 0, 60, 60);
-      rect(33, -5, prevblobs[i].f + 10, 10);
-      pop();
-      fill(0);
-      textSize(30);
-      text(prevblobs[i].score,prevblobs[i].pos.x,prevblobs[i].pos.y);
-      textSize(15);
-      text(prevblobs[i].name,prevblobs[i].pos.x,prevblobs[i].pos.y+40);
-
-      for (var n = 0; n < hooks.length; n++) {
-        noStroke();
-        fill(0,255,0);
-        ellipse(hooks[n].joint.x, hooks[n].joint.y, 15, 15);
-        fill(255,0,0);
-        for (var m = 0; m < hooks[n].spring.length; m++) {
-          ellipse(hooks[n].spring[m].pos.x, hooks[n].spring[m].pos.y, 10, 10);
-        }
-      }
-
-      fill(0,200,255);
-      rect(775,50,75,coolRectQ);
-      rect(875,50,75,coolRectW);
-      textSize(50);
-      fill(0);
-      text("Q",812.5,87.5);
-      text("W",912.5,87.5);
-      stroke(0,50,150);
-      strokeWeight(3);
-      noFill();
-      rect(775,50,75,75);
-      rect(875,50,75,75);
+  stroke(25);
+  fill(60);
+  for (var n = 0; n < pillars.length; n++) {
+    ellipse(pillars[n].pos.x, pillars[n].pos.y, 60, 60);
   }
+
+
+  noStroke();
+  strokeWeight(1);
+  for (var i = 0; i < prevblobs.length; i++) {
+    push();
+    translate(prevblobs[i].pos.x,prevblobs[i].pos.y);
+    rotate(prevblobs[i].theta);
+    stroke(0,0,255);
+    fill(0,150,255);
+    ellipse(0, 0, 60, 60);
+    rect(33, -5, prevblobs[i].f + 10, 10);
+    pop();
+    fill(0);
+    textSize(30);
+    text(prevblobs[i].score,prevblobs[i].pos.x,prevblobs[i].pos.y);
+    textSize(15);
+    text(prevblobs[i].name,prevblobs[i].pos.x,prevblobs[i].pos.y+40);
+  }
+
+  for (var n = 0; n < hooks.length; n++) {
+    noStroke();
+    fill(0,255,0);
+    ellipse(hooks[n].joint.x, hooks[n].joint.y, 15, 15);
+    fill(255,0,0);
+    for (var m = 0; m < hooks[n].spring.length; m++) {
+      ellipse(hooks[n].spring[m].pos.x, hooks[n].spring[m].pos.y, 10, 10);
+    }
+  }
+
+  fill(0,200,255);
+  rect(775,50,75,coolRectQ);
+  rect(875,50,75,coolRectW);
+  rect(875,150,75,coolRectE);
+  textSize(50);
+  fill(0);
+  text("Q",812.5,87.5);
+  text("W",912.5,87.5);
+  text("E",912.5,187.5);
+  stroke(0,50,150);
+  strokeWeight(3);
+  noFill();
+  rect(775,50,75,75);
+  rect(875,50,75,75);
+  rect(875,150,75,75);
 }
