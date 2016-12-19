@@ -50,6 +50,12 @@ function setup() {
     blobs = blobsData;
     hooks = hooksData;
   }
+
+  setInterval(function () {
+    fps = Math.floor(frameRate());
+    var time = new Date().getTime();
+    socket.emit('ping', time);
+  },200)
 }
 
 function lerpUpdate(){
@@ -226,7 +232,3 @@ function draw() {
       rect(875,50,75,75);
   }
 }
-
-setInterval(function () {
-  fps = Math.floor(frameRate());
-},200)

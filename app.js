@@ -271,7 +271,6 @@ function Blob(_x,_y,t,id,n) {
 
 setInterval(heartbeat,16);
 setInterval(physics,16);
-setInterval(ping, 100);
 
 function heartbeat() {
   var blobsJSON = JSON.stringify(blobs);
@@ -294,10 +293,6 @@ function physics() {
     blobs[i].run();
   }
 }
-function ping() {
-   var time = new Date().getTime();
-   io.sockets.emit("ping", time);
-}
 
 io.sockets.on('connection', newConnection);
 
@@ -315,6 +310,7 @@ function newConnection(socket) {
   socket.on('hook', hook);
   socket.on('left', left);
   socket.on('flash', flash);
+  socket.on('ping', ping);
 
   function disconnect() {
     for (var i = 0; i < blobs.length; i++) {
@@ -368,6 +364,9 @@ function newConnection(socket) {
         }
       },7000);
     }
+  }
+  function ping(time) {
+    socket.emit("ping",time);
   }
 
 }
