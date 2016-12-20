@@ -388,10 +388,14 @@ function newConnection(socket) {
     io.sockets.emit("scale",windowScale);
   }
   function press(id) {
-    byID(id).charge();
+    if (byID(id)) {
+      byID(id).charge();
+    }
   }
   function release(id) {
-    byID(id).release();
+    if (byID(id)) {
+      byID(id).release();
+    }
   }
   function hook(data) {
     if (!byID(data.id).hooked) {
