@@ -16,6 +16,7 @@ var coolRectE = 75;
 var ping = 0;
 var fps = 0;
 var startTime = 0;
+var windowScale = 1;
 
 function setup() {
   createCanvas(1000,800);
@@ -32,15 +33,18 @@ function setup() {
   socket = io.connect('https://bloby-game.herokuapp.com/');
 
 	socket.on('id', getId);
-  socket.on('count', updateCount);
+  socket.on('scale', setScale);
   socket.on('getPing', getPing);
   socket.on('heartbeat', heartbeat);
 
 	function getId(id) {
 		blob = new Blob(0,0,random(360),id);
 	}
-  function updateCount(data) {
-    p.innerHTML = "Počet pripojených ľudí : " + data;
+  // function updateCount(data) {
+  //   p.innerHTML = "Počet pripojených ľudí : " + data;
+  // }
+  function setScale(scale) {
+    windowScale = scale;
   }
   function getPing() {
     ping = Math.floor(new Date().getTime() - startTime);
@@ -118,7 +122,7 @@ function constrainMousePosition(min,max){
 
 function keyPressed() {
   if (started && key === 'Q' && coolRectQ >= 75) {
-    var point = constrainMousePosition(90,150);
+    var point = constrainMousePosition(90*windowScale,150*windowScale);
     var data = {
       id: blob.id,
       x : point.x,
@@ -134,7 +138,7 @@ function keyPressed() {
     },50);
   }
   if (started && key === 'W' && coolRectW >= 75) {
-    var point = constrainMousePosition(30,150);
+    var point = constrainMousePosition(30*windowScale,150*windowScale);
     var data = {
       id: blob.id,
       x : point.x,
@@ -150,7 +154,7 @@ function keyPressed() {
     },50);
   }
   if (started && key === 'E' && coolRectE >= 75) {
-    var point = constrainMousePosition(5,150);
+    var point = constrainMousePosition(5*windowScale,150*windowScale);
     var data = {
       id: blob.id,
       x : point.x,
@@ -212,7 +216,7 @@ function draw() {
   stroke(25);
   fill(60);
   for (var n = 0; n < pillars.length; n++) {
-    ellipse(pillars[n].pos.x, pillars[n].pos.y, 60, 60);
+    ellipse(pillars[n].pos.x, pillars[n].pos.y, 60*windowScale, 60*windowScale);
   }
 
 
@@ -224,23 +228,26 @@ function draw() {
     rotate(prevblobs[i].theta);
     stroke(0,0,255);
     fill(0,150,255);
-    ellipse(0, 0, 60, 60);
-    rect(33, -5, prevblobs[i].f + 10, 10);
+    if (prevblobs[i].id === blob.id) {
+      fill(255,50,0);
+    }
+    ellipse(0, 0, 60*windowScale, 60*windowScale);
+    rect(33*windowScale, -5*windowScale, prevblobs[i].f*windowScale + 10*windowScale, 10*windowScale);
     pop();
     fill(0);
-    textSize(30);
+    textSize(30*windowScale);
     text(prevblobs[i].score,prevblobs[i].pos.x,prevblobs[i].pos.y);
-    textSize(15);
-    text(prevblobs[i].name,prevblobs[i].pos.x,prevblobs[i].pos.y+40);
+    textSize(15*windowScale);
+    text(prevblobs[i].name,prevblobs[i].pos.x,prevblobs[i].pos.y+40*windowScale);
   }
 
   for (var n = 0; n < hooks.length; n++) {
     noStroke();
     fill(0,255,0);
-    ellipse(hooks[n].joint.x, hooks[n].joint.y, 15, 15);
+    ellipse(hooks[n].joint.x, hooks[n].joint.y, 15*windowScale, 15*windowScale);
     fill(255,0,0);
     for (var m = 0; m < hooks[n].spring.length; m++) {
-      ellipse(hooks[n].spring[m].pos.x, hooks[n].spring[m].pos.y, 10, 10);
+      ellipse(hooks[n].spring[m].pos.x, hooks[n].spring[m].pos.y, 10*windowScale, 10*windowScale);
     }
   }
 

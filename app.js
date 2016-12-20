@@ -17,6 +17,7 @@ var hooks = [];
 var pillars = [];
 var peopleCounter = 0;
 var omega = 0.06;
+var windowScale = 1;
 
 var add = function(a,b) { return { x:(a.x+b.x).fixed(), y:(a.y+b.y).fixed() }; };
 var sub = function(a,b) { return { x:(a.x-b.x).fixed(),y:(a.y-b.y).fixed() }; };
@@ -35,21 +36,22 @@ function newLocation() {
     var bool = true;
     var newPos = { x : (350 + Math.random()*300), y : (250 + Math.random()*300) };
     for (var i = 0; i < blobs.length; i++) {
-      if( mag(sub(blobs[i].pos , newPos)) < 80) bool = false;
-
+      if( mag(sub(blobs[i].pos , newPos)) < 80*windowScale) bool = false;
     }
     if (bool) {
       return newPos;
     }
   }
 }
-
+function scaleWindow(){
+  windowScale = 1.1 - 0.04*blobs.length;
+}
 
 Number.prototype.fixed = function(n) { n = n || 3; return parseFloat(this.toFixed(n)); };
 
 function Rope(x,y,id){
   this.spring = [];
-  this.dist = 30;
+  this.dist = 30*windowScale;
   this.id = id;
   this.joint = {x:x, y:y};
   this.t = 0;
@@ -100,9 +102,9 @@ function Rope(x,y,id){
   this.pull = function(blob) {
     var a = sub(this.spring[this.spring.length - 1].pos, blob.pos);
     var dist = mag(a);
-    if(dist > 10){
+    if(dist > 10*windowScale){
       a = mult(a,1/mag(a));
-      dist -= 10;
+      dist -= 10*windowScale;
       var newMag = dist * 0.003;
       a = mult(a,newMag);
       blob.acc = add(blob.acc,a);
@@ -117,7 +119,7 @@ function SpringNode(_x,_y) {
   this.pos = {x:_x,y:_y};
   this.vel = {x:0,y:0};
   this.acc = {x:0,y:0};
-  this.radius = 5;
+  this.radius = 5*windowScale;
 
   this.run = function(prev1, prev2) {
     this.update(prev1.x,prev1.y, prev2.x,prev2.y);
@@ -137,10 +139,10 @@ function SpringNode(_x,_y) {
   this.applyForce = function(t){
     var a = sub(t, this.pos);
     var dist = mag(a);
-    if(dist > 10){
+    if(dist > 10*windowScale){
       a = mult(a,1/mag(a));
-      dist -= 10;
-      var newMag = dist * this.stiffness;
+      dist -= 10*windowScale;
+      var newMag = dist * this.stiffness*windowScale;
       a = mult(a,newMag);
       this.acc = add(this.acc,a);
     }
@@ -196,8 +198,8 @@ function Blob(_x,_y,t,id,n) {
 
   this.release = function(){
     this.ch = -20;
-    var x = Math.cos(this.theta)*Math.pow(this.f/40,2);
-    var y = Math.sin(this.theta)*Math.pow(this.f/40,2);
+    var x = Math.cos(this.theta)*Math.pow(this.f/40,2)*windowScale;
+    var y = Math.sin(this.theta)*Math.pow(this.f/40,2)*windowScale;
     var f = {x:x,y:y};
     this.applyForce(f);
     this.rotating = true;
@@ -225,8 +227,8 @@ function Blob(_x,_y,t,id,n) {
     var newPos = { x : _x, y : _y };
     for (var i = 0; i < blobs.length; i++) {
       var diff = sub(newPos , blobs[i].pos);
-      if( mag(diff) < 62){
-        var len = 62 - mag(diff);
+      if( mag(diff) < 62*windowScale){
+        var len = 62*windowScale - mag(diff);
         diff = mult(diff,len/mag(diff));
         newPos = add(newPos,diff);
         break;
@@ -255,7 +257,7 @@ function Blob(_x,_y,t,id,n) {
         }
       }
       this.vel = mult(this.vel,0);
-      this.ch = -20;
+      this.ch = -20*windowScale;
       this.f = 0;
       this.rotating = true;
       if (this.touch) {
@@ -273,8 +275,8 @@ function Blob(_x,_y,t,id,n) {
   this.collision = function(other){
     var diff = sub(this.pos,other.pos);
     var dist = mag(diff);
-    if (dist <= this.r*2) {
-      var len = (61 - dist)*0.5;
+    if (dist <= this.r*2*windowScale) {
+      var len = (61*windowScale - dist)*0.5;
       diff = mult(diff,len/dist);
       this.pos = add(this.pos,diff);
       other.pos = sub(other.pos,diff);
@@ -292,8 +294,8 @@ function Blob(_x,_y,t,id,n) {
   this.hitPillar = function(pillar) {
     var diff = sub(this.pos , pillar.pos);
     var dist = mag(diff);
-    if( dist < this.r*2){
-      var len = 61 - dist;
+    if( dist < this.r*2*windowScale){
+      var len = 61*windowScale - dist;
       diff = mult(diff,len/dist);
       this.pos = add(this.pos,diff);
       diff = mult(diff, 1/len);
@@ -343,7 +345,6 @@ io.sockets.on('connection', newConnection);
 
 function newConnection(socket) {
   peopleCounter++;
-  // io.sockets.emit("count",peopleCounter);
 
   var id = uuid();
   socket.emit("id",id);
@@ -364,6 +365,8 @@ function newConnection(socket) {
     for (var i = 0; i < blobs.length; i++) {
       if(id == blobs[i].id){
         blobs.splice(i,1);
+        scaleWindow();
+        io.sockets.emit("scale",windowScale);
       }
     }
     for (var i = 0; i < hooks.length; i++) {
@@ -373,12 +376,16 @@ function newConnection(socket) {
     }
     console.log(id);
     peopleCounter--;
+    scaleWindow();
+    io.sockets.emit("scale",windowScale);
     // io.sockets.emit("count",peopleCounter);
   }
   function start(data) {
     var newPos = newLocation();
     var blob = new Blob(newPos.x,newPos.y,data.t,data.id,data.name);
     blobs.push(blob);
+    scaleWindow();
+    io.sockets.emit("scale",windowScale);
   }
   function press(id) {
     byID(id).charge();
