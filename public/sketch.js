@@ -17,6 +17,7 @@ var ping = 0;
 var fps = 0;
 var startTime = 0;
 var windowScale = 1;
+var chatFocus = false;
 
 function setup() {
   createCanvas(1000,800);
@@ -36,6 +37,41 @@ function setup() {
   socket.on('scale', setScale);
   socket.on('getPing', getPing);
   socket.on('heartbeat', heartbeat);
+  socket.on('chat message', function(data){
+    $('#messages').append($('<li>').text(data.name + ' : ').append($('<span>').text(data.msg)));
+  });
+
+  $('form').submit(function(){
+    if ($('#m').val()) {
+      var data = {
+        msg : $('#m').val(),
+        name : blob.name
+      }
+      socket.emit('chat message', data);
+      $('#m').val("")
+    }
+    $("#m").blur();
+    chatFocus = false;
+    return false;
+  });
+
+  $('#defaultCanvas0').mousedown(function() {
+    if (started && !chatFocus) {
+      socket.emit('press', blob.id);
+    }
+  });
+  $('#m').focusin(function() {
+    chatFocus = true;
+  });
+  $('#m').focusout(function() {
+    chatFocus = false;
+  });
+  $(document).keypress(function(e) {
+    if (started && e.which == 13  && !chatFocus) {
+      console.log("saddsa");
+      $('#m').focus();
+    }
+});
 
 	function getId(id) {
 		blob = new Blob(0,0,random(360),id);
@@ -121,7 +157,7 @@ function constrainMousePosition(min,max){
 }
 
 function keyPressed() {
-  if (started && key === 'Q' && coolRectQ >= 75) {
+  if (started && key === 'Q' && coolRectQ >= 75 && !chatFocus) {
     var point = constrainMousePosition(90*windowScale,150*windowScale);
     var data = {
       id: blob.id,
@@ -137,7 +173,7 @@ function keyPressed() {
       }
     },50);
   }
-  if (started && key === 'W' && coolRectW >= 75) {
+  if (started && key === 'W' && coolRectW >= 75 && !chatFocus) {
     var point = constrainMousePosition(30*windowScale,150*windowScale);
     var data = {
       id: blob.id,
@@ -153,7 +189,7 @@ function keyPressed() {
       }
     },50);
   }
-  if (started && key === 'E' && coolRectE >= 75) {
+  if (started && key === 'E' && coolRectE >= 75 && !chatFocus) {
     var point = constrainMousePosition(5*windowScale,150*windowScale);
     var data = {
       id: blob.id,
@@ -169,29 +205,16 @@ function keyPressed() {
       }
     },50);
   }
-  if (started && key === ' ') {
-    socket.emit('press', blob.id);
-  }
-
-}
-
-function touchStarted() {
-  if (started) {
-    socket.emit('press', blob.id);
-  }
 }
 
 function keyReleased() {
-  if (started && key === 'Q') {
+  if (started && key === 'Q' && !chatFocus) {
   	socket.emit('left', blob.id);
-  }
-  if (started && key === ' ') {
-  	socket.emit('release', blob.id);
   }
 }
 
 function touchEnded() {
-  if (started) {
+  if (started && !chatFocus) {
     socket.emit('release', blob.id);
   }
 }
@@ -201,8 +224,8 @@ function draw() {
   noStroke();
   fill(0);
   textSize(10);
-  text("FPS : " + fps,40,20);
-  text("Ping : " + ping ,40,40);
+  text("FPS : " + fps,940,20);
+  text("Ping : " + ping ,940,40);
 
   noFill();
   strokeWeight(10);
@@ -252,18 +275,18 @@ function draw() {
   }
 
   fill(0,200,255);
-  rect(775,50,75,coolRectQ);
-  rect(875,50,75,coolRectW);
-  rect(875,150,75,coolRectE);
+  rect(875,262.5,75,coolRectQ);
+  rect(875,362.5,75,coolRectW);
+  rect(875,462.5,75,coolRectE);
   textSize(50);
   fill(0);
-  text("Q",812.5,87.5);
-  text("W",912.5,87.5);
-  text("E",912.5,187.5);
+  text("Q",912.5,300);
+  text("W",912.5,400);
+  text("E",912.5,500);
   stroke(0,50,150);
   strokeWeight(3);
   noFill();
-  rect(775,50,75,75);
-  rect(875,50,75,75);
-  rect(875,150,75,75);
+  rect(875,262.5,75,75);
+  rect(875,362.5,75,75);
+  rect(875,462.5,75,75);
 }

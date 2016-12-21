@@ -360,6 +360,9 @@ function newConnection(socket) {
   socket.on('plsRespond', function () {
     socket.emit("getPing");
   });
+  socket.on('chat message', function(msg){
+    io.emit('chat message', msg);
+  });
 
   function disconnect() {
     for (var i = 0; i < blobs.length; i++) {
