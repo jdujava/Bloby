@@ -198,8 +198,8 @@ function Blob(_x,_y,t,id,n) {
 
   this.release = function(){
     this.ch = -20;
-    var x = Math.cos(this.theta)*Math.pow(this.f/40,2)*windowScale;
-    var y = Math.sin(this.theta)*Math.pow(this.f/40,2)*windowScale;
+    var x = Math.cos(this.theta)*Math.pow(this.f/30,2)*windowScale;
+    var y = Math.sin(this.theta)*Math.pow(this.f/30,2)*windowScale;
     var f = {x:x,y:y};
     this.applyForce(f);
     this.rotating = true;
