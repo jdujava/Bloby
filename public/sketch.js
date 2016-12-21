@@ -39,6 +39,7 @@ function setup() {
   socket.on('heartbeat', heartbeat);
   socket.on('chat message', function(data){
     $('#messages').append($('<li>').text(data.name + ' : ').append($('<span>').text(data.msg)));
+    $('#messages').animate({ scrollTop: $(document).height() }, "slow");
   });
 
   $('form').submit(function(){

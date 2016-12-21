@@ -108,9 +108,13 @@ form button {
   font-family: 'Titillium Web', sans-serif;
 }
 #messages {
+  position: relative;
+  top: 2px;
   list-style-type: none;
   margin: 0;
   padding: 0;
+  height: 675px;
+  overflow: auto;
 }
 #messages li {
   box-sizing: border-box;
