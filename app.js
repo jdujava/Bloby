@@ -113,7 +113,7 @@ function Rope(x,y,id){
 }
 
 function SpringNode(_x,_y) {
-  this.stiffness = 0.4;
+  this.stiffness = 0.5;
   this.damping = 0.70;
 
   this.pos = {x:_x,y:_y};
@@ -309,14 +309,16 @@ function Blob(_x,_y,t,id,n) {
 
 
 
-setInterval(heartbeat,16);
-setInterval(physics,16);
+setInterval(heartbeat,24);
+setInterval(physics,24);
 
 function heartbeat() {
-  var blobsJSON = JSON.stringify(blobs);
-  var hooksJSON = JSON.stringify(hooks);
-  var pillarsJSON = JSON.stringify(pillars);
-  var data = {blobs : blobsJSON, hooks : hooksJSON, pillars : pillarsJSON};
+  var data = {
+    blobs : blobs,
+    hooks : hooks,
+    pillars : pillars
+  }
+  var data = JSON.stringify(data);
   io.sockets.emit("heartbeat", data);
 }
 function physics() {

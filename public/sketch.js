@@ -87,13 +87,11 @@ function setup() {
     ping = Math.floor(new Date().getTime() - startTime);
   }
   function heartbeat(data) {
+    data = JSON.parse(data);
     prevblobs = blobs;
-    blobsData = JSON.parse(data.blobs);
-    hooksData = JSON.parse(data.hooks);
-    pillarsData = JSON.parse(data.pillars);
-    blobs = blobsData;
-    hooks = hooksData;
-    pillars = pillarsData;
+    blobs = data.blobs;
+    hooks = data.hooks;
+    pillars = data.pillars;
   }
 
   setInterval(function () {
