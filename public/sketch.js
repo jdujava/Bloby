@@ -31,7 +31,7 @@ function setup() {
 
   nameInput.changed(startOfGame);
 
-  socket = io.connect('https://bloby-game.herokuapp.com/');
+  socket = io.connect('http://tehblobs.herokuapp.com/');
 
 	socket.on('id', getId);
   socket.on('scale', setScale);
