@@ -78,7 +78,7 @@ function Rope(x,y,id){
         a.run(m,n);
       }
     }
-    this.t += 0.016;
+    this.t += 0.02;
     if (this.t > 3) {
       hooks.splice(0,1);
     }
@@ -113,8 +113,8 @@ function Rope(x,y,id){
 }
 
 function SpringNode(_x,_y) {
-  this.stiffness = 0.5;
-  this.damping = 0.70;
+  this.stiffness = 0.6;
+  this.damping = 0.65;
 
   this.pos = {x:_x,y:_y};
   this.vel = {x:0,y:0};
@@ -155,7 +155,7 @@ function Pillar(_x,_y,id){
   this.t = 0;
 
   this.run = function () {
-    this.t += 0.016;
+    this.t += 0.02;
     if (this.t > 3) {
       pillars.splice(0,1);
     }
@@ -191,7 +191,7 @@ function Blob(_x,_y,t,id,n) {
   }
 
   this.charge = function(){
-    this.ch = 2.5;
+    this.ch = 3.125;
     this.omega *= -1;
     this.rotating = false;
   }
@@ -309,8 +309,8 @@ function Blob(_x,_y,t,id,n) {
 
 
 
-setInterval(heartbeat,24);
-setInterval(physics,24);
+setInterval(heartbeat,20);
+setInterval(physics,20);
 
 function heartbeat() {
   var data = {
