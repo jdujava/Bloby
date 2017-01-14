@@ -16,6 +16,9 @@ var io = socket(server)
 var blobs = []
 var hooks = []
 var pillars = []
+var ball = new Ball()
+var teamCounter = 0
+var score = [0, 0]
 // var peopleCounter = 0
 var omega = 0.06
 var windowScale = 1
@@ -29,6 +32,31 @@ function byID (id) {
   for (var i = 0; i < blobs.length; i++) {
     if (id === blobs[i].id) {
       return blobs[i]
+    }
+  }
+}
+function team () {
+  if (teamCounter < 0) {
+    teamCounter++
+    return 'red'
+  } else if (teamCounter > 0) {
+    teamCounter--
+    return 'blue'
+  } else {
+    if (score[1] > score[0]) {
+      teamCounter++
+      return 'red'
+    } else if (score[0] > score[1]) {
+      teamCounter--
+      return 'blue'
+    } else {
+      if (Math.random() < 0.5) {
+        teamCounter++
+        return 'red'
+      } else {
+        teamCounter--
+        return 'blue'
+      }
     }
   }
 }
@@ -46,6 +74,9 @@ function newLocation () {
 }
 function scaleWindow () {
   windowScale = 1.1 - 0.04 * blobs.length
+}
+function constrain (value, min, max) {
+  return Math.max(min, Math.min(max, value))
 }
 
 // Number.prototype.fixed = function (n) { n = n || 3; return parseFloat(this.toFixed(n)) }
@@ -107,7 +138,7 @@ function Rope (x, y, id) {
     if (dist > 10 * windowScale) {
       a = mult(a, 1 / mag(a))
       dist -= 10 * windowScale
-      var newMag = dist * 0.003
+      var newMag = dist * 0.007
       a = mult(a, newMag)
       blob.acc = add(blob.acc, a)
     }
@@ -155,6 +186,7 @@ function Pillar (_x, _y, id) {
   this.pos = {x: _x, y: _y}
   this.id = id
   this.t = 0
+  this.r = 30
 
   this.run = function () {
     this.t += 0.02
@@ -164,7 +196,80 @@ function Pillar (_x, _y, id) {
   }
 }
 
-function Blob (_x, _y, t, id, n) {
+function Ball () {
+  this.pos = {x: 500, y: 400}
+  this.vel = {x: 0, y: 0}
+  this.acc = {x: 0, y: 0}
+  this.r = 20
+  this.touch
+  this.id
+
+  this.run = function () {
+    this.borders()
+    this.update()
+  }
+
+  this.applyForce = function (f) {
+    this.acc = add(this.acc, f)
+  }
+
+  this.update = function () {
+    this.vel = add(this.vel, this.acc)
+    this.pos = add(this.pos, this.vel)
+    this.acc = mult(this.acc, 0)
+  }
+
+  this.borders = function () {
+    if (this.pos.x > 850 - 30 * windowScale || this.pos.x < 150 + 30 * windowScale) {
+      this.vel.x *= -1
+      this.pos.x = constrain(this.pos.x, 150 + 30 * windowScale, 850 - 30 * windowScale)
+    }
+    if (this.pos.y > 750 - 30 * windowScale || this.pos.y < 50 + 30 * windowScale) {
+      if (this.pos.x > 375 && this.pos.x < 625) {
+        if (byID(this.touch)) {
+          var lastTouchBlob = byID(this.touch)
+          if (this.pos.y > 400) {
+            score[0]++
+            if (lastTouchBlob.team === 'red') {
+              lastTouchBlob.score++
+            }
+          } else {
+            score[1]++
+            if (lastTouchBlob.team === 'blue') {
+              lastTouchBlob.score++
+            }
+          }
+        }
+        this.pos = {x: 500, y: 400}
+        this.vel = {x: 0, y: 0}
+        this.acc = {x: 0, y: 0}
+        this.touch = undefined
+        this.id = undefined
+      } else {
+        this.vel.y *= -1
+        this.pos.y = constrain(this.pos.y, 50 + 30 * windowScale, 750 - 30 * windowScale)
+      }
+    }
+  }
+
+  this.hitPillar = function (pillar) {
+    var diff = sub(this.pos, pillar.pos)
+    var dist = mag(diff)
+    if (dist < (this.r + pillar.r) * windowScale) {
+      var len = (this.r + pillar.r) * windowScale - dist
+      diff = mult(diff, len / dist)
+      this.pos = add(this.pos, diff)
+      diff = mult(diff, 1 / len)
+      var p = 2 * this.vel.x * diff.x + 2 * this.vel.y * diff.y
+      var f1 = mult(diff, -p)
+      this.applyForce(f1)
+      this.touch = pillar.id
+      this.id = this.touch
+    }
+  }
+}
+
+function Blob (_x, _y, t, id, n, team) {
   this.pos = {x: _x, y: _y}
   this.vel = {x: 0, y: 0}
   this.acc = {x: 0, y: 0}
@@ -176,6 +281,7 @@ function Blob (_x, _y, t, id, n) {
   this.rotating = true
   this.id = id
   this.name = n
+  this.team = team
   this.score = 0
   this.touch
   this.hooked = false
@@ -209,13 +315,15 @@ function Blob (_x, _y, t, id, n) {
 
   this.update = function () {
     this.vel = add(this.vel, this.acc)
+    this.vel.x = constrain(this.vel.x, -5, 5)
+    this.vel.y = constrain(this.vel.y, -5, 5)
     this.pos = add(this.pos, this.vel)
     this.acc = mult(this.acc, 0)
     if (this.rotating) {
       this.theta += this.omega
     }
     this.f += this.ch
-    this.f = Math.max(0, Math.min(60, this.f))
+    this.f = constrain(this.f, 0, 60)
   }
 
   this.throwHook = function (id, x, y) {
@@ -236,8 +344,8 @@ function Blob (_x, _y, t, id, n) {
         break
       }
     }
-    this.pos.x = newPos.x
-    this.pos.y = newPos.y
+    this.pos.x = constrain(newPos.x, 150 + 30 * windowScale, 850 - 30 * windowScale)
+    this.pos.y = constrain(newPos.y, 50 + 30 * windowScale, 750 - 30 * windowScale)
     this.flashed = true
   }
 
@@ -248,44 +356,28 @@ function Blob (_x, _y, t, id, n) {
   }
 
   this.borders = function () {
-    if (mag(sub(this.pos, {x: 500, y: 400})) > 320) {
-      this.score--
-      if (this.hooked) {
-        this.hooked = false
-        for (var i = 0; i < hooks.length; i++) {
-          if (hooks[i].id === this.id) {
-            hooks.splice(i, 1)
-          }
-        }
-      }
-      this.vel = mult(this.vel, 0)
-      this.ch = -20 * windowScale
-      this.f = 0
-      this.rotating = true
-      if (this.touch) {
-        if (byID(this.touch)) {
-          byID(this.touch).score ++
-        }
-        this.touch = undefined
-      }
-      var newPos = newLocation()
-      this.pos.x = newPos.x
-      this.pos.y = newPos.y
+    if (this.pos.x > 850 - 30 * windowScale || this.pos.x < 150 + 30 * windowScale) {
+      this.vel.x *= -1
+      this.pos.x = constrain(this.pos.x, 150 + 30 * windowScale, 850 - 30 * windowScale)
+    }
+    if (this.pos.y > 750 - 30 * windowScale || this.pos.y < 50 + 30 * windowScale) {
+      this.vel.y *= -1
+      this.pos.y = constrain(this.pos.y, 50 + 30 * windowScale, 750 - 30 * windowScale)
     }
   }
 
   this.collision = function (other) {
     var diff = sub(this.pos, other.pos)
     var dist = mag(diff)
-    if (dist <= this.r * 2 * windowScale) {
-      var len = (61 * windowScale - dist) * 0.5
+    if (dist <= (this.r + other.r) * windowScale) {
+      var len = ((this.r + other.r) * windowScale - dist) * 0.5
       diff = mult(diff, len / dist)
       this.pos = add(this.pos, diff)
       other.pos = sub(other.pos, diff)
       diff = mult(diff, 1 / len)
-      var p = this.vel.x * diff.x + this.vel.y * diff.y - other.vel.x * diff.x - other.vel.y * diff.y
-      var f1 = mult(diff, -p)
-      var f2 = mult(diff, p)
+      var p = 2 * (this.vel.x * diff.x + this.vel.y * diff.y - other.vel.x * diff.x - other.vel.y * diff.y) / (this.r * this.r + other.r * other.r)
+      var f1 = mult(diff, -p * other.r * other.r)
+      var f2 = mult(diff, p * this.r * this.r)
       this.applyForce(f1)
       other.applyForce(f2)
       this.touch = other.id
@@ -316,13 +408,16 @@ function heartbeat () {
   var data = {
     blobs: blobs,
     hooks: hooks,
-    pillars: pillars
+    pillars: pillars,
+    ball: ball,
+    score: score
   }
   data = JSON.stringify(data)
   io.sockets.emit('heartbeat', data)
 }
 function physics () {
   for (var i = 0; i < pillars.length; i++) {
+    ball.hitPillar(pillars[i])
     pillars[i].run()
   }
   for (i = 0; i < blobs.length - 1; i++) {
@@ -336,11 +431,13 @@ function physics () {
     }
   }
   for (i = 0; i < blobs.length; i++) {
+    blobs[i].collision(ball)
     for (var k = 0; k < pillars.length; k++) {
       blobs[i].hitPillar(pillars[k])
     }
     blobs[i].run()
   }
+  ball.run()
 }
 
 io.sockets.on('connection', newConnection)
@@ -387,7 +484,7 @@ function newConnection (socket) {
   }
   function start (data) {
     var newPos = newLocation()
-    var blob = new Blob(newPos.x, newPos.y, data.t, data.id, data.name)
+    var blob = new Blob(newPos.x, newPos.y, data.t, data.id, data.name, team())
     blobs.push(blob)
     scaleWindow()
     io.sockets.emit('scale', windowScale)

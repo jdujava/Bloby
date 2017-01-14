@@ -4,6 +4,8 @@ var blobs = []
 var prevblobs = []
 var hooks = []
 var pillars = []
+var ball
+var score = [0, 0]
 var omega = 0.1
 var blob
 // var p
@@ -98,6 +100,8 @@ function setup () {
     blobs = data.blobs
     hooks = data.hooks
     pillars = data.pillars
+    ball = data.ball
+    score = data.score
   }
 
   setInterval(function () {
@@ -231,11 +235,18 @@ function draw () {
   textSize(10)
   text('FPS : ' + fps, 940, 20)
   text('Ping : ' + ping, 940, 40)
+  // textSize(50)
+  // text('FPS : ' + fps, 940, 20)
+  // text('Ping : ' + ping, 940, 40)
 
   noFill()
   strokeWeight(10)
   stroke(100, 200, 0)
-  ellipse(500, 400, 700, 700)
+  rect(150, 50, 700, 700)
+  stroke(255, 50, 50)
+  rect(375, 50, 250, 0)
+  stroke(50, 50, 255)
+  rect(375, 750, 250, 0)
   strokeWeight(1)
   noStroke()
 
@@ -253,10 +264,12 @@ function draw () {
     push()
     translate(prevblobs[i].pos.x, prevblobs[i].pos.y)
     rotate(prevblobs[i].theta)
-    stroke(0, 0, 255)
-    fill(0, 150, 255)
+    fill(46, 147, 251)
     if (prevblobs[i].id === blob.id) {
-      fill(255, 50, 0)
+      if(prevblobs[i].team === 'red') fill(246, 66, 48)
+      else fill(48, 66, 246)
+    } else if (prevblobs[i].team === 'red') {
+      fill(249, 91, 91)
     }
     ellipse(0, 0, 60 * windowScale, 60 * windowScale)
     rect(33 * windowScale, -5 * windowScale, prevblobs[i].f * windowScale + 10 * windowScale, 10 * windowScale)
@@ -268,8 +281,15 @@ function draw () {
     text(prevblobs[i].name, prevblobs[i].pos.x, prevblobs[i].pos.y + 40 * windowScale)
   }
 
+if (ball) {
+  stroke(0)
+  fill(255, 150, 0)
+  ellipse(ball.pos.x, ball.pos.y, 2 * ball.r * windowScale, 2 * ball.r * windowScale)
+}
+
+noStroke()
+
   for (n = 0; n < hooks.length; n++) {
-    noStroke()
     fill(0, 255, 0)
     ellipse(hooks[n].joint.x, hooks[n].joint.y, 15 * windowScale, 15 * windowScale)
     fill(255, 0, 0)
@@ -287,6 +307,10 @@ function draw () {
   text('Q', 912.5, 300)
   text('W', 912.5, 400)
   text('E', 912.5, 500)
+  fill(255, 50, 50)
+  text(score[0], 912.5, 150)
+  fill(50, 50, 255)
+  text(score[1], 912.5, 650)
   stroke(0, 50, 150)
   strokeWeight(3)
   noFill()
