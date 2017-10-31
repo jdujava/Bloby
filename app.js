@@ -19,7 +19,7 @@ var pillars = []
 // var peopleCounter = 0
 var omega = 0.06
 var windowScale = 1
-var dt = 0.5
+var dt = 2
 
 var add = function (a, b) { return { x: (a.x + b.x), y: (a.y + b.y) } }
 var sub = function (a, b) { return { x: (a.x - b.x), y: (a.y - b.y) } }
@@ -310,7 +310,7 @@ Blob.prototype.hitPillar = function (pillar) {
   }
 }
 
-setInterval(heartbeat, 10)
+setInterval(heartbeat, 40)
 
 function heartbeat () {
   physics()
