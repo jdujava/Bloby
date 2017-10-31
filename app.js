@@ -57,62 +57,62 @@ function Rope (x, y, id) {
   this.joint = {x: x, y: y}
   this.t = 0
   this.active = false
-
-  this.run = function () {
-    var m, n
-    if (this.spring.length === 1) {
-      m = this.joint
-      n = byID(this.id).pos
-      this.spring[0].run(m, n)
-    } else {
-      for (var i = 0; i < this.spring.length; i++) {
-        var a = this.spring[i]
-        if (i === 0) {
-          m = this.joint
-          n = this.spring[i + 1].pos
-        } else if (i === this.spring.length - 1) {
-          m = this.spring[i - 1].pos
-          n = byID(this.id).pos
-        } else {
-          m = this.spring[i - 1].pos
-          n = this.spring[i + 1].pos
-        }
-        a.run(m, n)
+}
+Rope.prototype.run = function () {
+  var m, n
+  if (this.spring.length === 1) {
+    m = this.joint
+    n = byID(this.id).pos
+    this.spring[0].run(m, n)
+  } else {
+    for (var i = 0; i < this.spring.length; i++) {
+      var a = this.spring[i]
+      if (i === 0) {
+        m = this.joint
+        n = this.spring[i + 1].pos
+      } else if (i === this.spring.length - 1) {
+        m = this.spring[i - 1].pos
+        n = byID(this.id).pos
+      } else {
+        m = this.spring[i - 1].pos
+        n = this.spring[i + 1].pos
       }
-    }
-    this.t += 0.02
-    if (this.t > 3) {
-      hooks.splice(0, 1)
-    }
-    if (this.spring[this.spring.length - 1]) {
-      this.pull(byID(this.id))
+      a.run(m, n)
     }
   }
-
-  this.addSpring = function () {
-    var diff = sub(this.joint, byID(this.id).pos)
-    var dist = mag(diff)
-    var count = Math.max(Math.ceil(dist / this.dist), 3)
-    diff = mult(diff, 1 / count)
-    for (var i = 1; i < count - 1; i++) {
-      var x = byID(this.id).pos.x + i * diff.x
-      var y = byID(this.id).pos.y + i * diff.y
-      this.spring.push(new SpringNode(x, y))
-    }
-    this.active = true
+  this.t += 0.02
+  if (this.t > 3) {
+    hooks.splice(0, 1)
   }
-  this.pull = function (blob) {
-    var a = sub(this.spring[this.spring.length - 1].pos, blob.pos)
-    var dist = mag(a)
-    if (dist > 10 * windowScale) {
-      a = mult(a, 1 / mag(a))
-      dist -= 10 * windowScale
-      var newMag = dist * 0.003
-      a = mult(a, newMag)
-      blob.acc = add(blob.acc, a)
-    }
+  if (this.spring[this.spring.length - 1]) {
+    this.pull(byID(this.id))
   }
 }
+
+Rope.prototype.addSpring = function () {
+  var diff = sub(this.joint, byID(this.id).pos)
+  var dist = mag(diff)
+  var count = Math.max(Math.ceil(dist / this.dist), 3)
+  diff = mult(diff, 1 / count)
+  for (var i = 1; i < count - 1; i++) {
+    var x = byID(this.id).pos.x + i * diff.x
+    var y = byID(this.id).pos.y + i * diff.y
+    this.spring.push(new SpringNode(x, y))
+  }
+  this.active = true
+}
+Rope.prototype.pull = function (blob) {
+  var a = sub(this.spring[this.spring.length - 1].pos, blob.pos)
+  var dist = mag(a)
+  if (dist > 10 * windowScale) {
+    a = mult(a, 1 / mag(a))
+    dist -= 10 * windowScale
+    var newMag = dist * 0.003
+    a = mult(a, newMag)
+    blob.acc = add(blob.acc, a)
+  }
+}
+
 
 function SpringNode (_x, _y) {
   this.stiffness = 0.6
@@ -122,32 +122,32 @@ function SpringNode (_x, _y) {
   this.vel = {x: 0, y: 0}
   this.acc = {x: 0, y: 0}
   this.radius = 5 * windowScale
+}
 
-  this.run = function (prev1, prev2) {
-    this.update(prev1.x, prev1.y, prev2.x, prev2.y)
-    // this.display(prev1.x,prev1.y);
-  }
+SpringNode.prototype.run = function (prev1, prev2) {
+  this.update(prev1.x, prev1.y, prev2.x, prev2.y)
+  // this.display(prev1.x,prev1.y);
+}
 
-  this.update = function (x1, y1, x2, y2) {
-    var target1 = {x: x1, y: y1}
-    var target2 = {x: x2, y: y2}
-    this.applyForce(target1)
-    this.applyForce(target2)
-    this.vel = mult(add(this.vel, this.acc), this.damping)
-    this.pos = add(this.pos, this.vel)
-    this.acc = mult(this.acc, 0)
-  }
+SpringNode.prototype.update = function (x1, y1, x2, y2) {
+  var target1 = {x: x1, y: y1}
+  var target2 = {x: x2, y: y2}
+  this.applyForce(target1)
+  this.applyForce(target2)
+  this.vel = mult(add(this.vel, this.acc), this.damping)
+  this.pos = add(this.pos, this.vel)
+  this.acc = mult(this.acc, 0)
+}
 
-  this.applyForce = function (t) {
-    var a = sub(t, this.pos)
-    var dist = mag(a)
-    if (dist > 10 * windowScale) {
-      a = mult(a, 1 / mag(a))
-      dist -= 10 * windowScale
-      var newMag = dist * this.stiffness * windowScale
-      a = mult(a, newMag)
-      this.acc = add(this.acc, a)
-    }
+SpringNode.prototype.applyForce = function (t) {
+  var a = sub(t, this.pos)
+  var dist = mag(a)
+  if (dist > 10 * windowScale) {
+    a = mult(a, 1 / mag(a))
+    dist -= 10 * windowScale
+    var newMag = dist * this.stiffness * windowScale
+    a = mult(a, newMag)
+    this.acc = add(this.acc, a)
   }
 }
 
@@ -155,12 +155,12 @@ function Pillar (_x, _y, id) {
   this.pos = {x: _x, y: _y}
   this.id = id
   this.t = 0
+}
 
-  this.run = function () {
-    this.t += 0.02
-    if (this.t > 3) {
-      pillars.splice(0, 1)
-    }
+Pillar.prototype.run = function () {
+  this.t += 0.02
+  if (this.t > 3) {
+    pillars.splice(0, 1)
   }
 }
 
@@ -309,10 +309,10 @@ Blob.prototype.hitPillar = function (pillar) {
   }
 }
 
-setInterval(heartbeat, 20)
-setInterval(physics, 20)
+setInterval(heartbeat, 10)
 
 function heartbeat () {
+  physics()
   var data = {
     blobs: blobs,
     hooks: hooks,
