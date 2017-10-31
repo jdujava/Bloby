@@ -19,7 +19,7 @@ var pillars = []
 // var peopleCounter = 0
 var omega = 0.06
 var windowScale = 1
-var dt = 2
+var dt = 3
 
 var add = function (a, b) { return { x: (a.x + b.x), y: (a.y + b.y) } }
 var sub = function (a, b) { return { x: (a.x - b.x), y: (a.y - b.y) } }
@@ -108,7 +108,7 @@ Rope.prototype.pull = function (blob) {
   if (dist > 10 * windowScale) {
     a = mult(a, 1 / mag(a))
     dist -= 10 * windowScale
-    var newMag = dist * 0.003 * dt
+    var newMag = dist * 0.006 * dt
     a = mult(a, newMag)
     blob.acc = add(blob.acc, a)
   }
@@ -116,7 +116,7 @@ Rope.prototype.pull = function (blob) {
 
 
 function SpringNode (_x, _y) {
-  this.stiffness = 0.6
+  this.stiffness = 0.8
   this.damping = 0.65
 
   this.pos = {x: _x, y: _y}
@@ -146,7 +146,7 @@ SpringNode.prototype.applyForce = function (t) {
   if (dist > 10 * windowScale) {
     a = mult(a, 1 / mag(a))
     dist -= 10 * windowScale
-    var newMag = dist * this.stiffness * windowScale
+    var newMag = dist * this.stiffness * windowScale * dt
     a = mult(a, newMag)
     this.acc = add(this.acc, a)
   }
