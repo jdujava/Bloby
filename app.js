@@ -107,7 +107,7 @@ Rope.prototype.pull = function (blob) {
   if (dist > 10 * windowScale) {
     a = mult(a, 1 / mag(a))
     dist -= 10 * windowScale
-    var newMag = dist * 0.003
+    var newMag = dist * 0.005
     a = mult(a, newMag)
     blob.acc = add(blob.acc, a)
   }
@@ -115,8 +115,8 @@ Rope.prototype.pull = function (blob) {
 
 
 function SpringNode (_x, _y) {
-  this.stiffness = 0.8
-  this.damping = 0.8
+  this.stiffness = 0.7
+  this.damping = 0.6
 
   this.pos = {x: _x, y: _y}
   this.vel = {x: 0, y: 0}
