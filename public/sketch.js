@@ -32,7 +32,7 @@ function setup () {
 
   nameInput.changed(startOfGame)
 
-  socket = io.connect('http://tehblobs.herokuapp.com/')
+  socket = io.connect('https://tehblobs.herokuapp.com/')
   //socket = io.connect('http://localhost:5000/')
 
   socket.on('id', getId)
