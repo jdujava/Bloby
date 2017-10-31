@@ -210,7 +210,7 @@ Blob.prototype.release = function () {
 }
 
 Blob.prototype.update = function () {
-  this.vel = add(this.vel, this.acc))
+  this.vel = add(this.vel, this.acc)
   this.pos = add(this.pos, mult(this.vel,dt))
   this.acc = mult(this.acc, 0)
   if (this.rotating) {
