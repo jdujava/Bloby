@@ -116,7 +116,7 @@ Rope.prototype.pull = function (blob) {
 
 function SpringNode (_x, _y) {
   this.stiffness = 0.8
-  this.damping = 0.8
+  this.damping = 0.68
 
   this.pos = {x: _x, y: _y}
   this.vel = {x: 0, y: 0}
@@ -309,7 +309,7 @@ Blob.prototype.hitPillar = function (pillar) {
   }
 }
 
-setInterval(heartbeat, 20).00
+setInterval(heartbeat, 20)
 
 function heartbeat () {
   physics()
