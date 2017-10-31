@@ -182,130 +182,130 @@ function Blob (_x, _y, t, id, n) {
   this.flashed = false
   this.pillared = false
   this.hookID
+}
 
-  this.run = function () {
-    this.borders()
-    this.update()
+Blob.prototype.run = function () {
+  this.borders()
+  this.update()
+}
+
+Blob.prototype.applyForce = function (f) {
+  this.acc = add(this.acc, f)
+}
+
+Blob.prototype.charge = function () {
+  this.ch = 3.125
+  this.omega *= -1
+  this.rotating = false
+}
+
+Blob.prototype.release = function () {
+  this.ch = -20
+  var x = Math.cos(this.theta) * Math.pow(this.f / 30, 2) * windowScale
+  var y = Math.sin(this.theta) * Math.pow(this.f / 30, 2) * windowScale
+  var f = {x: x, y: y}
+  this.applyForce(f)
+  this.rotating = true
+}
+
+Blob.prototype.update = function () {
+  this.vel = add(this.vel, this.acc)
+  this.pos = add(this.pos, this.vel)
+  this.acc = mult(this.acc, 0)
+  if (this.rotating) {
+    this.theta += this.omega
   }
+  this.f += this.ch
+  this.f = Math.max(0, Math.min(60, this.f))
+}
 
-  this.applyForce = function (f) {
-    this.acc = add(this.acc, f)
-  }
+Blob.prototype.throwHook = function (id, x, y) {
+  var hook = new Rope(x, y, id)
+  hook.addSpring()
+  hooks.push(hook)
+  this.hooked = true
+}
 
-  this.charge = function () {
-    this.ch = 3.125
-    this.omega *= -1
-    this.rotating = false
-  }
-
-  this.release = function () {
-    this.ch = -20
-    var x = Math.cos(this.theta) * Math.pow(this.f / 30, 2) * windowScale
-    var y = Math.sin(this.theta) * Math.pow(this.f / 30, 2) * windowScale
-    var f = {x: x, y: y}
-    this.applyForce(f)
-    this.rotating = true
-  }
-
-  this.update = function () {
-    this.vel = add(this.vel, this.acc)
-    this.pos = add(this.pos, this.vel)
-    this.acc = mult(this.acc, 0)
-    if (this.rotating) {
-      this.theta += this.omega
+Blob.prototype.flash = function (_x, _y) {
+  var newPos = { x: _x, y: _y }
+  for (var i = 0; i < blobs.length; i++) {
+    var diff = sub(newPos, blobs[i].pos)
+    if (mag(diff) < 62 * windowScale) {
+      var len = 62 * windowScale - mag(diff)
+      diff = mult(diff, len / mag(diff))
+      newPos = add(newPos, diff)
+      break
     }
-    this.f += this.ch
-    this.f = Math.max(0, Math.min(60, this.f))
   }
+  this.pos.x = newPos.x
+  this.pos.y = newPos.y
+  this.flashed = true
+}
 
-  this.throwHook = function (id, x, y) {
-    var hook = new Rope(x, y, id)
-    hook.addSpring()
-    hooks.push(hook)
-    this.hooked = true
-  }
+Blob.prototype.pillar = function (x, y, id) {
+  var pillar = new Pillar(x, y, id)
+  pillars.push(pillar)
+  this.pillared = true
+}
 
-  this.flash = function (_x, _y) {
-    var newPos = { x: _x, y: _y }
-    for (var i = 0; i < blobs.length; i++) {
-      var diff = sub(newPos, blobs[i].pos)
-      if (mag(diff) < 62 * windowScale) {
-        var len = 62 * windowScale - mag(diff)
-        diff = mult(diff, len / mag(diff))
-        newPos = add(newPos, diff)
-        break
+Blob.prototype.borders = function () {
+  if (mag(sub(this.pos, {x: 500, y: 400})) > 320) {
+    this.score--
+    if (this.hooked) {
+      this.hooked = false
+      for (var i = 0; i < hooks.length; i++) {
+        if (hooks[i].id === this.id) {
+          hooks.splice(i, 1)
+        }
       }
     }
+    this.vel = mult(this.vel, 0)
+    this.ch = -20 * windowScale
+    this.f = 0
+    this.rotating = true
+    if (this.touch) {
+      if (byID(this.touch)) {
+        byID(this.touch).score ++
+      }
+      this.touch = undefined
+    }
+    var newPos = newLocation()
     this.pos.x = newPos.x
     this.pos.y = newPos.y
-    this.flashed = true
   }
+}
 
-  this.pillar = function (x, y, id) {
-    var pillar = new Pillar(x, y, id)
-    pillars.push(pillar)
-    this.pillared = true
+Blob.prototype.collision = function (other) {
+  var diff = sub(this.pos, other.pos)
+  var dist = mag(diff)
+  if (dist <= this.r * 2 * windowScale) {
+    var len = (61 * windowScale - dist) * 0.5
+    diff = mult(diff, len / dist)
+    this.pos = add(this.pos, diff)
+    other.pos = sub(other.pos, diff)
+    diff = mult(diff, 1 / len)
+    var p = this.vel.x * diff.x + this.vel.y * diff.y - other.vel.x * diff.x - other.vel.y * diff.y
+    var f1 = mult(diff, -p)
+    var f2 = mult(diff, p)
+    this.applyForce(f1)
+    other.applyForce(f2)
+    this.touch = other.id
+    other.touch = this.id
   }
+}
 
-  this.borders = function () {
-    if (mag(sub(this.pos, {x: 500, y: 400})) > 320) {
-      this.score--
-      if (this.hooked) {
-        this.hooked = false
-        for (var i = 0; i < hooks.length; i++) {
-          if (hooks[i].id === this.id) {
-            hooks.splice(i, 1)
-          }
-        }
-      }
-      this.vel = mult(this.vel, 0)
-      this.ch = -20 * windowScale
-      this.f = 0
-      this.rotating = true
-      if (this.touch) {
-        if (byID(this.touch)) {
-          byID(this.touch).score ++
-        }
-        this.touch = undefined
-      }
-      var newPos = newLocation()
-      this.pos.x = newPos.x
-      this.pos.y = newPos.y
-    }
-  }
-
-  this.collision = function (other) {
-    var diff = sub(this.pos, other.pos)
-    var dist = mag(diff)
-    if (dist <= this.r * 2 * windowScale) {
-      var len = (61 * windowScale - dist) * 0.5
-      diff = mult(diff, len / dist)
-      this.pos = add(this.pos, diff)
-      other.pos = sub(other.pos, diff)
-      diff = mult(diff, 1 / len)
-      var p = this.vel.x * diff.x + this.vel.y * diff.y - other.vel.x * diff.x - other.vel.y * diff.y
-      var f1 = mult(diff, -p)
-      var f2 = mult(diff, p)
-      this.applyForce(f1)
-      other.applyForce(f2)
-      this.touch = other.id
-      other.touch = this.id
-    }
-  }
-
-  this.hitPillar = function (pillar) {
-    var diff = sub(this.pos, pillar.pos)
-    var dist = mag(diff)
-    if (dist < this.r * 2 * windowScale) {
-      var len = 61 * windowScale - dist
-      diff = mult(diff, len / dist)
-      this.pos = add(this.pos, diff)
-      diff = mult(diff, 1 / len)
-      var p = 2 * this.vel.x * diff.x + 2 * this.vel.y * diff.y
-      var f1 = mult(diff, -p)
-      this.applyForce(f1)
-      if (this.id !== pillar.id) this.touch = pillar.id
-    }
+Blob.prototype.hitPillar = function (pillar) {
+  var diff = sub(this.pos, pillar.pos)
+  var dist = mag(diff)
+  if (dist < this.r * 2 * windowScale) {
+    var len = 61 * windowScale - dist
+    diff = mult(diff, len / dist)
+    this.pos = add(this.pos, diff)
+    diff = mult(diff, 1 / len)
+    var p = 2 * this.vel.x * diff.x + 2 * this.vel.y * diff.y
+    var f1 = mult(diff, -p)
+    this.applyForce(f1)
+    if (this.id !== pillar.id) this.touch = pillar.id
   }
 }
 
