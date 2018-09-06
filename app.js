@@ -309,7 +309,7 @@ Blob.prototype.hitPillar = function (pillar) {
   }
 }
 
-setInterval(heartbeat, 20)
+setInterval(heartbeat, 5)
 
 function heartbeat () {
   physics()
