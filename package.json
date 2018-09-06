@@ -8,7 +8,6 @@
     "start": "nodemon app.js"
   },
   "keywords": [
-    "p5.js",
     "sockets",
     "game",
     "node"
@@ -18,7 +17,7 @@
   "dependencies": {
     "express": "^4.14.0",
     "heroku": "^0.2.0",
-    "pg": "6.1.2",
+    "pg": "6.1.6",
     "socket.io": "^1.7.1",
     "uuid": "^3.0.1"
   }
