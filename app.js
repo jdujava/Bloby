@@ -19,7 +19,7 @@ var pillars = []
 // var peopleCounter = 0
 var omega = 0.06
 var windowScale = 1
-var dt = 0.25
+var dt = 0.5
 
 var add = function (a, b) { return { x: (a.x + b.x), y: (a.y + b.y) } }
 var sub = function (a, b) { return { x: (a.x - b.x), y: (a.y - b.y) } }
@@ -81,7 +81,7 @@ Rope.prototype.run = function () {
       a.run(m, n)
     }
   }
-  this.t += 0.02
+  this.t += 0.02 * dt
   if (this.t > 3) {
     hooks.splice(0, 1)
   }
@@ -108,7 +108,7 @@ Rope.prototype.pull = function (blob) {
   if (dist > 10 * windowScale) {
     a = mult(a, 1 / mag(a))
     dist -= 10 * windowScale
-    var newMag = dist * 0.005
+    var newMag = dist * 0.005 * dt
     a = mult(a, newMag)
     blob.acc = add(blob.acc, a)
   }
@@ -146,7 +146,7 @@ SpringNode.prototype.applyForce = function (t) {
   if (dist > 10 * windowScale) {
     a = mult(a, 1 / mag(a))
     dist -= 10 * windowScale
-    var newMag = dist * this.stiffness * windowScale
+    var newMag = dist * this.stiffness * windowScale * dt
     a = mult(a, newMag)
     this.acc = add(this.acc, a)
   }
@@ -159,7 +159,7 @@ function Pillar (_x, _y, id) {
 }
 
 Pillar.prototype.run = function () {
-  this.t += 0.02
+  this.t += 0.02 * dt
   if (this.t > 3) {
     pillars.splice(0, 1)
   }
@@ -310,7 +310,7 @@ Blob.prototype.hitPillar = function (pillar) {
   }
 }
 
-setInterval(heartbeat, 5)
+setInterval(heartbeat, 10)
 
 function heartbeat () {
   physics()
