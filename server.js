@@ -5,10 +5,12 @@ var path = require('path')
 
 var app = express()
 
-app.set('port', (process.env.PORT || 8080))
-var server = app.listen(process.env.PORT || 8080)
+var port = process.env.PORT || process.env.OPENSHIFT_NODEJS_PORT || 8080;
+app.set('port', port)
+var server = app.listen(port)
 
-app.use(express.static(path.join(__dirname, 'views')))
+app.engine('html', require('ejs').renderFile);
+//app.use(express.static(path.join(__dirname, 'views')))
 
 var socket = require('socket.io')
 var io = socket(server)
@@ -441,3 +443,14 @@ function newConnection (socket) {
     }
   }
 }
+
+app.get('/', function (req, res) {
+	res.render('index.html');
+}
+
+app.use(function(err, req, res, next){
+  console.error(err.stack);
+  res.status(500).send('Something bad happened!');
+});
+
+module.exports = app ;
