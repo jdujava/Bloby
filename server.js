@@ -10,7 +10,7 @@ app.set('port', port)
 var server = app.listen(port)
 
 app.engine('html', require('ejs').renderFile);
-//app.use(express.static(path.join(__dirname, 'views')))
+app.use(express.static(path.join(__dirname, 'views')))
 
 var socket = require('socket.io')
 var io = socket(server)
@@ -445,7 +445,7 @@ function newConnection (socket) {
 }
 
 app.get('/', function (req, res) {
-	res.render('index.html');
+	res.render('index.html',{});
 });
 
 app.use(function(err, req, res, next){

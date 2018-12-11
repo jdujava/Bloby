@@ -32,8 +32,8 @@ function setup () {
 
   nameInput.changed(startOfGame)
 
-  socket = io.connect('http://blobyyyyy-testttttt.a3c1.starter-us-west-1.openshiftapps.com/')
-  //socket = io.connect('http://localhost:5000/')
+  socket = io.connect('http://bloby-bloby.a3c1.starter-us-west-1.openshiftapps.com/')
+  //socket = io.connect('http://localhost:8080')
 
   socket.on('id', getId)
   socket.on('scale', setScale)
