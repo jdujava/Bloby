@@ -16,5 +16,17 @@
     "pg": "6.1.6",
     "socket.io": "^1.7.1",
     "uuid": "^3.0.1"
-  }
+  },
+  "scripts": {
+    "start": "node server.js"
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jdujava/Bloby.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jdujava/Bloby/issues"
+  },
+  "homepage": "https://github.com/jdujava/Bloby#readme"
 }
