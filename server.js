@@ -10,7 +10,7 @@ app.set('port', port)
 var server = app.listen(port)
 
 app.engine('html', require('ejs').renderFile);
-//app.use(express.static(path.join(__dirname, 'views')))
+app.use(express.static('views'))
 
 var socket = require('socket.io')
 var io = socket(server)
