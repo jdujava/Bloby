@@ -9,8 +9,7 @@ var port = process.env.PORT || process.env.OPENSHIFT_NODEJS_PORT || 8080;
 app.set('port', port)
 var server = app.listen(port)
 
-app.engine('html', require('ejs').renderFile);
-app.use(express.static('views'))
+app.use('/', express.static('views'));
 
 var socket = require('socket.io')
 var io = socket(server)
@@ -444,13 +443,8 @@ function newConnection (socket) {
   }
 }
 
-app.get('/', function (req, res) {
-	res.render('index.html',{});
-});
-
-app.use(function(err, req, res, next){
-  console.error(err.stack);
-  res.status(500).send('Something bad happened!');
+app.get('*', function(req, res) {
+    res.sendFile(path.join(__dirname + '/views/index.html'));
 });
 
 module.exports = app ;
