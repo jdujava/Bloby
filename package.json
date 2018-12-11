@@ -11,6 +11,7 @@
   "author": "Dujava Jonas",
   "license": "ISC",
   "dependencies": {
+    "ejs": "^2.6.1",
     "express": "^4.14.0",
     "heroku": "^0.2.0",
     "pg": "6.1.6",

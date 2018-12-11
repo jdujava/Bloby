@@ -446,7 +446,7 @@ function newConnection (socket) {
 
 app.get('/', function (req, res) {
 	res.render('index.html');
-}
+});
 
 app.use(function(err, req, res, next){
   console.error(err.stack);
